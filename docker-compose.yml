@@ -1,0 +1,26 @@
+services:
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/server/.env
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./apps/server/public/uploads:/app/public/uploads
+      - ./apps/server/services/reports:/app/services/reports
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/frontend/.env.local
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+    command: npm run dev -- --host 0.0.0.0
+    restart: unless-stopped

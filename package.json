@@ -1,0 +1,20 @@
+{
+  "name": "aitu-science-rms",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/frontend",
+    "apps/server"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "dev": "concurrently -n server,frontend -c cyan,green \"npm run start --workspace apps/server\" \"npm run dev --workspace apps/frontend\"",
+    "build": "npm run build --workspace apps/frontend",
+    "start:server": "npm run start --workspace apps/server",
+    "check:server": "node --check apps/server/server.js",
+    "lint:frontend": "npm run lint --workspace apps/frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

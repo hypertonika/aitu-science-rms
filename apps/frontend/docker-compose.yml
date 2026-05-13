@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  front:
+    restart: unless-stopped
+    build:
+      context: ./
+    expose:
+      - "5173"
+    ports:
+      - "5173:5173"
+    command: npm run dev
+    env_file: ".env.local"
+    networks:
+      - compose_network
+
+networks:
+  compose_network:
+    external: true
