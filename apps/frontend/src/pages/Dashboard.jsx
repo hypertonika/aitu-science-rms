@@ -25,7 +25,7 @@ export default function UserProfile() {
     role: "",
   });
 
-  const url = import.meta.env.VITE_API_URL;
+  const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");

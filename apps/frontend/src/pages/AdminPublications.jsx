@@ -36,7 +36,7 @@ export default function AdminPublications() {
   const [publications, setPublications] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-  const url = import.meta.env.VITE_API_URL;
+  const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const [selectedSchool, setSelectedSchool] = useState('all');
   
   const fetchData = useCallback(async () => {

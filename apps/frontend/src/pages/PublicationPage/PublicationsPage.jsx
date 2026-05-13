@@ -50,7 +50,7 @@ export default function PublicationsPage() {
   const itemsPerPage = 8;
   const [showImport, setShowImport] = useState(false);
 
-  const url = import.meta.env.VITE_API_URL
+  const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
   useEffect(() => {
     try {

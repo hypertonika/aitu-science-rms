@@ -3,7 +3,7 @@ import CustomDialog from "../../../components/CustomDialog/CustomDialog";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { makeAuthenticatedRequest } from "../../../services/api";
-const url = import.meta.env.VITE_API_URL;
+const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function EDIT({ pub, updateData, resetPage }) {
   const [isOpen, setIsOpen] = useState(false);

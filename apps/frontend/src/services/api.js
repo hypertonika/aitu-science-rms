@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
-const url = import.meta.env.VITE_API_URL
+const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 if (!url) {
   console.error('VITE_API_URL не задан в окружении')

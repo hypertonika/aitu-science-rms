@@ -23,7 +23,7 @@ export default function UserProfile() {
   const [activeTab, setActiveTab] = useState('profile')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 8
-  const url = import.meta.env.VITE_API_URL
+  const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
   const [publicationPrediction, setPublicationPrediction] = useState(null)
   const [publicationTrend, setPublicationTrend] = useState(null)
 

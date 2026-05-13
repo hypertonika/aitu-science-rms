@@ -8,7 +8,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('') 
 
-  const url = import.meta.env.VITE_API_URL
+  const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
   const handleIINChange = (e) => {
     const input = e.target.value.toLowerCase()

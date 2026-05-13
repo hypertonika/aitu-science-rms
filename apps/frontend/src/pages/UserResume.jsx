@@ -8,7 +8,7 @@ export default function UserResume() {
   const { iin } = useParams()
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const url = import.meta.env.VITE_API_URL
+  const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken')

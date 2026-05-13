@@ -12,7 +12,7 @@ import {
 } from "@headlessui/react";
 import { crossrefService } from '../../../services/crossrefService';
 
-const url = import.meta.env.VITE_API_URL;
+const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 export default function ADD({ updateData }) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);

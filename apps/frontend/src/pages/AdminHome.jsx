@@ -18,7 +18,7 @@ export default function AdminHome() {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
   const [statistics, setStatistics] = useState(null)
-  const url = import.meta.env.VITE_API_URL
+  const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
   useEffect(() => {
     const fetchStatistics = async () => {
