@@ -1,132 +1,115 @@
-import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
-import { makeAuthenticatedRequest } from "../services/api";
-import Navbar from "../components/Navbar";
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { jwtDecode } from 'jwt-decode'
+import {
+  Camera,
+  Eye,
+  IdCard,
+  Mail,
+  Pencil,
+  Phone,
+  Save,
+  UserRound,
+  X,
+} from 'lucide-react'
+import { makeAuthenticatedRequest } from '../services/api'
+import Navbar from '../components/Navbar'
+import { allHigherSchools, visibilityMap } from '../constants/publications'
 
-export default function UserProfile() {
-  const navigate = useNavigate();
-  const { iin } = useParams();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [userData, setUserData] = useState({
-    fullName: "",
-    profilePhoto: "",
-    scopusId: "",
-    wosId: "",
-    orcid: "",
-    birthDate: "",
-    phone: "",
-    email: "",
-    researchArea: "",
-    higherSchool: "",
-    profileVisibility: "institutional",
-    role: "",
-  });
+const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const initialUserData = {
+  fullName: '',
+  profilePhoto: '',
+  scopusId: '',
+  wosId: '',
+  orcid: '',
+  birthDate: '',
+  phone: '',
+  email: '',
+  researchArea: '',
+  higherSchool: '',
+  profileVisibility: 'institutional',
+  role: '',
+}
+
+export default function Dashboard() {
+  const navigate = useNavigate()
+  const { iin } = useParams()
+  const [isLoading, setIsLoading] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [message, setMessage] = useState('')
+  const [userData, setUserData] = useState(initialUserData)
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem('accessToken')
 
     if (!token) {
-      navigate("/login");
-      return;
+      navigate('/login')
+      return
     }
 
-    const decodedToken = jwtDecode(token);
-    const isAdmin = decodedToken.role === "admin";
-    setIsAdmin(isAdmin);
+    const decodedToken = jwtDecode(token)
+    const admin = decodedToken.role === 'admin'
+    setIsAdmin(admin)
 
     const fetchUserData = async () => {
       try {
-        const endpoint =
-          isAdmin && iin
-            ? `${url}/api/admin/user/${iin}`
-            : `${url}/api/user/profile`;
+        const endpoint = admin && iin ? `${url}/api/admin/user/${iin}` : `${url}/api/user/profile`
+        const response = await makeAuthenticatedRequest(endpoint, { method: 'GET' }, navigate)
 
-        const response = await makeAuthenticatedRequest(
-          endpoint,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          },
-          navigate
-        );
-
-        if (response.status === 200) {
-          setUserData(response.data);
-        } else {
-          console.warn("Не удалось загрузить профиль пользователя");
-          navigate("/login");
+        if (response?.status === 200) {
+          setUserData(response.data.user || response.data)
         }
       } catch (error) {
-        console.error("Ошибка при загрузке данных пользователя:", error);
-        navigate("/login");
+        console.error('Profile loading failed:', error)
+        setMessage('Could not load profile data.')
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
-
-    fetchUserData();
-  }, [navigate, iin, url]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setUserData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleProfilePhotoChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) {
-      console.error("Файл не выбран");
-      return;
     }
 
-    const token = localStorage.getItem("accessToken");
-    const formData = new FormData();
-    formData.append("profilePhoto", file);
+    fetchUserData()
+  }, [navigate, iin])
 
-    console.log("Отправляемый файл:", file);
-    console.log("Отправляемый FormData:", formData);
+  const handleInputChange = (event) => {
+    const { name, value } = event.target
+    setUserData((current) => ({ ...current, [name]: value }))
+  }
+
+  const handleProfilePhotoChange = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('profilePhoto', file)
 
     try {
-      const response = await fetch(`${url}/api/user/uploadPhoto`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      setMessage('')
+      const response = await makeAuthenticatedRequest(
+        `${url}/api/user/uploadPhoto`,
+        {
+          method: 'POST',
+          data: formData,
+          headers: { 'Content-Type': 'multipart/form-data' },
         },
-        body: formData,
-      });
+        navigate
+      )
 
-      const result = await response.json();
-      if (response.ok) {
-        console.log("Файл успешно загружен:", result);
-        setUserData((prev) => ({ ...prev, profilePhoto: result.profilePhoto }));
-        alert("Фотография успешно обновлена!");
-      } else {
-        console.error("Ошибка при загрузке файла:", result);
-        alert("Ошибка при загрузке фотографии");
+      if (response?.status === 200) {
+        setUserData((current) => ({ ...current, profilePhoto: response.data.profilePhoto }))
+        setMessage('Profile photo updated.')
       }
     } catch (error) {
-      console.error("Ошибка при загрузке фото:", error);
-      alert("Произошла ошибка. Попробуйте позже.");
+      console.error('Photo upload failed:', error)
+      setMessage('Could not upload profile photo. Use an image up to 5 MB.')
     }
-  };
+  }
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        alert("Ошибка авторизации. Пожалуйста, войдите снова.");
-        return;
-      }
-
-      // Подготавливаем данные для отправки
+      setMessage('')
       const updateData = {
         fullName: userData.fullName,
         scopusId: userData.scopusId,
@@ -137,191 +120,190 @@ export default function UserProfile() {
         email: userData.email,
         researchArea: userData.researchArea,
         higherSchool: userData.higherSchool,
-        profileVisibility: userData.profileVisibility
-      };
+        profileVisibility: userData.profileVisibility,
+      }
 
       const response = await makeAuthenticatedRequest(
         `${url}/api/user/update`,
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          data: updateData
+          method: 'PUT',
+          data: updateData,
         },
         navigate
-      );
+      )
 
-      if (response.status === 200) {
-        // Обновляем локальное состояние
-        setUserData(prevData => ({
-          ...prevData,
-          ...response.data
-        }));
-        
-        alert("Информация успешно обновлена!");
-        setIsEditing(false);
-      } else {
-        throw new Error(response.data?.message || "Ошибка при обновлении информации");
+      if (response?.status === 200) {
+        setUserData((current) => ({ ...current, ...(response.data.user || updateData) }))
+        setIsEditing(false)
+        setMessage('Profile saved.')
       }
     } catch (error) {
-      console.error("Ошибка при обновлении:", error);
-      alert(error.message || "Произошла ошибка. Попробуйте позже.");
+      console.error('Profile update failed:', error)
+      setMessage(error.response?.data?.message || 'Could not save profile changes.')
     }
-  };
+  }
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <p className="text-lg font-bold">Загрузка...</p>
+      <div className="min-h-screen bg-slate-50">
+        <Navbar role={isAdmin ? 'admin' : 'user'} />
+        <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <div className="h-96 animate-pulse rounded-lg border border-slate-200 bg-white" />
+        </main>
       </div>
-    );
+    )
   }
 
   return (
-    <>
-      <Navbar role={isAdmin ? "admin" : "user"} />
-      <div className="max-w-7xl mx-auto min-h-screen bg-gray-100 p-8">
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-48 h-48 mb-4 rounded-full overflow-hidden border-4 border-gray-300">
-            <img
-              src={
-                userData.profilePhoto
-                  ? `${url}${userData.profilePhoto}`
-                  : "/default-profile.png"
-              }
-              alt="Profile Photo"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          {isEditing && (
-            <label className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-              Загрузить фото
-              <input
-                type="file"
-                onChange={handleProfilePhotoChange}
-                className="hidden"
-              />
-            </label>
-          )}
-        </div>
+    <div className="min-h-screen bg-slate-50">
+      <Navbar role={isAdmin ? 'admin' : 'user'} />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-          {[
-            "fullName",
-            "scopusId",
-            "wosId",
-            "orcid",
-            "birthDate",
-            "phone",
-            "email",
-            "researchArea"
-          ].map((field) => (
-            <div key={field}>
-              <label className="block mb-1 font-medium text-gray-700">
-                {field === "fullName" && "ФИО"}
-                {field === "scopusId" && "Scopus Author ID"}
-                {field === "wosId" && "Web of Science ResearcherID"}
-                {field === "orcid" && "ORCID"}
-                {field === "birthDate" && "Дата рождения"}
-                {field === "phone" && "Телефон"}
-                {field === "email" && "Email"}
-                {field === "researchArea" && "Научные интересы"}
-              </label>
-              {isEditing ? (
-                field === "researchArea" ? (
-                  <textarea
-                    name={field}
-                    value={userData[field]}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                ) : (
-                  <input
-                    type={field === "birthDate" ? "date" : "text"}
-                    name={field}
-                    value={userData[field]}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                )
-              ) : (
-                <p className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
-                  {userData[field] || "Не указано"}
-                </p>
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="grid gap-0 lg:grid-cols-[320px_1fr]">
+            <aside className="border-b border-slate-200 bg-slate-950 p-6 text-white lg:border-b-0 lg:border-r">
+              <div className="mx-auto h-36 w-36 overflow-hidden rounded-full border-4 border-white/20 bg-white/10">
+                <img
+                  src={userData.profilePhoto ? `${url}${userData.profilePhoto}` : '/default-profile.png'}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="mt-5 text-center">
+                <h1 className="text-xl font-bold">{userData.fullName || 'Your profile'}</h1>
+                <p className="mt-1 text-sm text-slate-300">{userData.email || 'Email not specified'}</p>
+                <span className="mt-4 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-cyan-100">
+                  {userData.role === 'admin' ? 'Admin' : 'Researcher'}
+                </span>
+              </div>
+
+              {isEditing && !isAdmin && (
+                <label className="mt-6 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                  <Camera className="h-4 w-4" />
+                  Upload photo
+                  <input type="file" accept="image/*" onChange={handleProfilePhotoChange} className="hidden" />
+                </label>
               )}
+            </aside>
+
+            <div className="p-6 sm:p-8">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+                    <UserRound className="h-4 w-4" />
+                    Academic profile
+                  </div>
+                  <h2 className="text-3xl font-bold text-slate-950">Profile Details</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                    Keep identifiers, contacts and research interests accurate for reports and publication records.
+                  </p>
+                </div>
+
+                {!isAdmin && (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing((value) => !value)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                    >
+                      {isEditing ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                      {isEditing ? 'Cancel' : 'Edit'}
+                    </button>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={handleSave}
+                        className="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800"
+                      >
+                        <Save className="h-4 w-4" />
+                        Save
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {message && (
+                <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+                  {message}
+                </div>
+              )}
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <Field name="fullName" label="Full name" value={userData.fullName} icon={IdCard} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="email" label="Email" value={userData.email} icon={Mail} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="phone" label="Phone" value={userData.phone} icon={Phone} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="birthDate" label="Birth date" value={userData.birthDate} type="date" isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="orcid" label="ORCID" value={userData.orcid} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="scopusId" label="Scopus Author ID" value={userData.scopusId} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="wosId" label="Web of Science ID" value={userData.wosId} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <SelectField
+                  name="profileVisibility"
+                  label="Profile visibility"
+                  value={userData.profileVisibility || 'institutional'}
+                  icon={Eye}
+                  isEditing={isEditing && !isAdmin}
+                  onChange={handleInputChange}
+                  options={Object.entries(visibilityMap).map(([value, label]) => ({ value, label }))}
+                />
+                <SelectField
+                  name="higherSchool"
+                  label="Higher school"
+                  value={userData.higherSchool || ''}
+                  isEditing={isEditing && !isAdmin}
+                  onChange={handleInputChange}
+                  options={allHigherSchools.map((school) => ({ value: school, label: school }))}
+                  wide
+                />
+                <Field name="researchArea" label="Research area" value={userData.researchArea} isEditing={isEditing && !isAdmin} onChange={handleInputChange} multiline wide />
+              </div>
             </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  )
+}
+
+function Field({ name, label, value, icon: Icon, isEditing, onChange, type = 'text', multiline = false, wide = false }) {
+  return (
+    <div className={`rounded-lg border border-slate-200 bg-slate-50 p-4 ${wide ? 'md:col-span-2' : ''}`}>
+      <label className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+        {Icon && <Icon className="h-3.5 w-3.5" />}
+        {label}
+      </label>
+      {isEditing ? (
+        multiline ? (
+          <textarea name={name} value={value || ''} onChange={onChange} rows={4} className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+        ) : (
+          <input type={type} name={name} value={value || ''} onChange={onChange} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+        )
+      ) : (
+        <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-slate-800">{value || 'Not specified'}</p>
+      )}
+    </div>
+  )
+}
+
+function SelectField({ name, label, value, icon: Icon, isEditing, onChange, options, wide = false }) {
+  const selected = options.find((option) => option.value === value)
+
+  return (
+    <div className={`rounded-lg border border-slate-200 bg-slate-50 p-4 ${wide ? 'md:col-span-2' : ''}`}>
+      <label className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+        {Icon && <Icon className="h-3.5 w-3.5" />}
+        {label}
+      </label>
+      {isEditing ? (
+        <select name={name} value={value} onChange={onChange} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          <option value="">Not specified</option>
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
           ))}
-
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">Высшая школа</label>
-            {isEditing ? (
-              <select
-                name="higherSchool"
-                value={userData.higherSchool}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Выберите школу</option>
-                <option value="Высшая школа информационных технологий и инженерии">Высшая школа информационных технологий и инженерии</option>
-                <option value="Высшая школа экономики">Высшая школа экономики</option>
-                <option value="Высшая школа права">Высшая школа права</option>
-                <option value="Педагогический институт">Педагогический институт</option>
-                <option value="Высшая школа искусств и гуманитарных наук">Высшая школа искусств и гуманитарных наук</option>
-                <option value="Высшая школа естественных наук">Высшая школа естественных наук</option>
-              </select>
-            ) : (
-              <p className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
-                {userData.higherSchool || "Не указано"}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">Profile visibility</label>
-            {isEditing ? (
-              <select
-                name="profileVisibility"
-                value={userData.profileVisibility || "institutional"}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="private">Private</option>
-                <option value="institutional">Institutional</option>
-                <option value="public">Public</option>
-              </select>
-            ) : (
-              <p className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
-                {userData.profileVisibility || "institutional"}
-              </p>
-            )}
-          </div>
-
-        </div>
-
-        
-
-        {!isAdmin && (
-          <div className="mt-6 flex justify-center gap-4">
-            <button
-              onClick={() => setIsEditing((prev) => !prev)}
-              className="py-2 px-4 text-white bg-yellow-600 rounded-lg hover:bg-yellow-700"
-            >
-              {isEditing ? "Отменить" : "Редактировать"}
-            </button>
-
-            {isEditing && (
-              <button
-                onClick={handleSave}
-                className="py-2 px-4 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              >
-                Сохранить изменения
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </>
-  );
+        </select>
+      ) : (
+        <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-slate-800">{selected?.label || value || 'Not specified'}</p>
+      )}
+    </div>
+  )
 }
