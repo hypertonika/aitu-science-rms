@@ -10,6 +10,7 @@ export default function UserResume() {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isGenerating, setIsGenerating] = useState(false)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function UserResume() {
   const generateResume = async (format) => {
     try {
       setMessage('')
+      setIsGenerating(true)
       const response = await makeAuthenticatedRequest(
         `${url}/api/user/generateResume`,
         {
@@ -44,6 +46,10 @@ export default function UserResume() {
       )
 
       const data = response.data
+      if (!data?.docxPath || !data?.pdfPath) {
+        throw new Error('Resume paths were not returned by the server.')
+      }
+
       if (format === 'docx') {
         window.open(`${url}/api/user/downloadResumeDocx?path=${encodeURIComponent(data.docxPath)}`)
       } else if (format === 'pdf') {
@@ -51,7 +57,9 @@ export default function UserResume() {
       }
     } catch (error) {
       console.error('Resume generation failed:', error)
-      setMessage('Could not generate resume file.')
+      setMessage(error.response?.data?.message || 'Could not generate resume file.')
+    } finally {
+      setIsGenerating(false)
     }
   }
 
@@ -95,13 +103,13 @@ export default function UserResume() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => generateResume('docx')} className="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800">
+              <button type="button" disabled={isGenerating} onClick={() => generateResume('docx')} className="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60">
                 <Download className="h-4 w-4" />
-                DOCX
+                {isGenerating ? 'Generating...' : 'DOCX'}
               </button>
-              <button type="button" onClick={() => generateResume('pdf')} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50">
+              <button type="button" disabled={isGenerating} onClick={() => generateResume('pdf')} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
                 <Download className="h-4 w-4" />
-                PDF
+                {isGenerating ? 'Generating...' : 'PDF'}
               </button>
             </div>
           </div>
@@ -121,7 +129,7 @@ export default function UserResume() {
               </span>
               <div>
                 <h2 className="text-base font-bold text-slate-950">{user.fullName || 'Unnamed researcher'}</h2>
-                <p className="text-sm text-slate-500">IIN {user.iin}</p>
+                <p className="text-sm text-slate-500">{user.email || user.iin}</p>
               </div>
             </div>
             <div className="space-y-3 text-sm text-slate-700">

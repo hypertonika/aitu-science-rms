@@ -4,46 +4,34 @@ const { generateUserResume, generateUserResumePDF } = require('../../../services
 const { verifyToken } = require('../../../middleware/auth');
 
 module.exports = async function handler(req, res) {
-  // await corsMiddleware(req, res);
-  // await dbConnect();
-  
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  if (!verifyToken(req, res)) return; // Middleware to verify token
-
-  const { iin } = req.body;
-
   try {
-    const user = await User.findOne({ iin });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    await new Promise((resolve, reject) =>
+      verifyToken(req, res, (err) => (err ? reject(err) : resolve()))
+    );
 
-    const publications = await Publication.find({ iin });
+    const targetIin = req.user.role === 'admin' && req.body.iin ? req.body.iin : req.user.iin;
+    const user = await User.findOne({ iin: targetIin }).select('-password -refreshToken');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const publications = await Publication.find({ iin: targetIin, status: 'approved' }).sort({ year: -1 });
     const resumePathDocx = await generateUserResume(user, publications);
     const resumePathPdf = await generateUserResumePDF(user, publications);
 
-    res.status(200).json({ success: true, docxPath: resumePathDocx, pdfPath: resumePathPdf });
+    return res.status(200).json({
+      success: true,
+      docxPath: resumePathDocx,
+      pdfPath: resumePathPdf,
+    });
   } catch (error) {
-    console.error('Error generating resume:', error);
-    res.status(500).json({ message: 'Error generating resume' });
+    console.error('Resume generation failed:', error);
+    if (!res.headersSent) {
+      return res.status(500).json({ message: 'Could not generate resume' });
+    }
   }
-}
-
-// app.post('/api/user/generateResume', verifyToken, async (req, res) => {
-//     const { iin } = req.body;
-//     try {
-//       const user = await User.findOne({ iin });
-//       if (!user) return res.status(404).json({ message: 'User not found' });
-  
-//       const publications = await Publication.find({ iin });
-//       const resumePathDocx = await generateUserResume(user, publications);
-//       const resumePathPdf = await generateUserResumePDF(user, publications);
-//       console.log(resumePathDocx);
-  
-//       res.status(200).json({ success: true, docxPath: resumePathDocx, pdfPath: resumePathPdf });
-//     } catch (error) {
-//       console.error('Error generating resume:', error);
-//       res.status(500).json({ message: 'Error generating resume' });
-//     }
-//   });
+};

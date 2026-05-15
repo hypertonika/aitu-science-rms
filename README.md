@@ -11,7 +11,7 @@ The project is organized as a Node.js monorepo:
 
 - JWT authentication with access and refresh token rotation.
 - User and admin roles with protected frontend routes and backend role checks.
-- Researcher profile management: contacts, school, visibility, ORCID, Scopus and Web of Science identifiers.
+- Email-based researcher accounts and profile management: contacts, school, visibility, ORCID, Scopus and Web of Science identifiers.
 - Publication CRUD with draft, submitted, approved and rejected statuses.
 - DOI/Crossref import into draft publications.
 - Duplicate publication checks by normalized title, authors and DOI.
@@ -125,7 +125,7 @@ Keep real `.env` files local. Only `.env.example` files should be committed.
 
 Researcher:
 
-1. Register or sign in.
+1. Register or sign in with email and password.
 2. Complete profile data in `Profile`.
 3. Add a publication manually or import metadata from Crossref.
 4. Submit draft/rejected publications for review.

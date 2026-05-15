@@ -34,7 +34,12 @@ const userSchema = new mongoose.Schema({
   orcid: String,
   birthDate: String,
   phone: String,
-  email: String,
+  email: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    index: true,
+  },
   researchArea: String,
   refreshToken: {
     type: String,
