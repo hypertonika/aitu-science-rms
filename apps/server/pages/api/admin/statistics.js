@@ -11,6 +11,10 @@ module.exports = async function handler(req, res) {
       verifyToken(req, res, (err) => (err ? reject(err) : resolve()))
     );
 
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
     const statistics = await calculateStatistics();
     res.status(200).json(statistics);
   } catch (error) {

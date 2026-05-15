@@ -3,13 +3,13 @@ const Publication = require("../../../models/Publication");
 const ApprovalRecord = require("../../../models/ApprovalRecord");
 const { verifyToken, authenticateAdmin } = require("../../../middleware/auth");
 const { buildPublicationFilters, findDuplicatePublication, addNormalizedPublicationFields } = require("../../../services/publicationUtils");
-const { sendCsv, sendPdf } = require("../../../services/exportUtils");
+const { sendCsv, sendPdf, sendXlsx } = require("../../../services/exportUtils");
 
 const router = express.Router();
 
 router.get("/export", verifyToken, authenticateAdmin, async (req, res) => {
   try {
-    const format = req.query.format === "pdf" ? "pdf" : "csv";
+    const format = ["csv", "pdf", "xlsx"].includes(req.query.format) ? req.query.format : "csv";
     const filter = {
       status: "approved",
       ...buildPublicationFilters(req.query),
@@ -27,6 +27,9 @@ router.get("/export", verifyToken, authenticateAdmin, async (req, res) => {
 
     if (format === "pdf") {
       return sendPdf(res, exportPublications, "approved_publications.pdf", "Approved Publications");
+    }
+    if (format === "xlsx") {
+      return sendXlsx(res, exportPublications, "approved_publications.xlsx", "Approved Publications");
     }
     return sendCsv(res, exportPublications, "approved_publications.csv");
   } catch (error) {

@@ -26,9 +26,8 @@ export default function UserResume() {
             },
           }, navigate)
       
-          if (response.ok) {
-            const data = await response.json()
-            setUser(data)
+          if (response.status === 200) {
+            setUser(response.data)
           } else {
             navigate('/login')
           }
@@ -41,17 +40,17 @@ export default function UserResume() {
       }
       fetchUserData()
     }
-  }, [navigate, iin])
+  }, [navigate, iin, url])
 
   const generateResume = async (format) => {
     try {
       const response = await makeAuthenticatedRequest(`${url}/api/user/generateResume`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ iin }),
+        data: { iin },
       }, navigate)
       
-      const data = await response.json()
+      const data = response.data
       if (format === 'docx') {
         window.open(`${url}/api/user/downloadResumeDocx?path=${data.docxPath}`)
       } else if (format === 'pdf') {

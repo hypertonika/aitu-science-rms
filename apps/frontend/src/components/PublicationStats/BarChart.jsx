@@ -8,102 +8,54 @@ export default function BarChart({
   height = 300,
 }) {
   const total = series.reduce((prev, cur) => prev + cur, 0) || 1;
+
   return (
     <ReactApexChart
-      className='w-full h-full'
-      type='bar'
+      className="h-full w-full"
+      type="bar"
       height={height}
-      series={[{ 
-        name: 'Публикации',
-        data: series 
-      }]}
+      series={[{ name: 'Publications', data: series }]}
       options={{
         chart: {
-          toolbar: {
-            show: false
-          },
+          toolbar: { show: false },
           animations: {
             enabled: true,
             easing: 'easeinout',
-            speed: 800,
-            animateGradually: {
-              enabled: true,
-              delay: 150
-            },
-            dynamicAnimation: {
-              enabled: true,
-              speed: 350
-            }
-          }
+            speed: 600,
+          },
         },
-        colors: ['rgba(33, 150, 243, 0.85)'],
+        colors: ['#2563eb'],
         xaxis: {
           categories: labels,
-          axisBorder: {
-            show: false
-          },
-          axisTicks: {
-            show: false
-          },
-          labels: {
-            style: {
-              colors: '#64748b',
-              fontSize: '12px'
-            }
-          }
+          axisBorder: { show: false },
+          axisTicks: { show: false },
+          labels: { style: { colors: '#64748b', fontSize: '12px' } },
         },
         yaxis: {
-          labels: {
-            style: {
-              colors: '#64748b',
-              fontSize: '12px'
-            }
-          }
+          labels: { style: { colors: '#64748b', fontSize: '12px' } },
         },
         grid: {
-          borderColor: '#f1f5f9',
+          borderColor: '#e2e8f0',
           strokeDashArray: 4,
-          yaxis: {
-            lines: {
-              show: true
-            }
-          }
         },
         dataLabels: {
           enabled: true,
-          formatter: function (val) {
-            return Math.round((val / (max || total)) * 100) + '%';
-          },
-          style: {
-            fontSize: '12px',
-            colors: ['#1e293b']
-          },
-          offsetY: -20
+          formatter: (val) => `${Math.round((val / (max || total)) * 100)}%`,
+          style: { fontSize: '12px', colors: ['#0f172a'] },
+          offsetY: -20,
         },
         plotOptions: {
           bar: {
             horizontal: isHorizontal,
             borderRadius: 6,
             columnWidth: '60%',
-            dataLabels: {
-              position: 'top'
-            },
-            hover: {
-              filter: {
-                type: 'darken',
-                value: 0.15
-              }
-            }
-          }
+            dataLabels: { position: 'top' },
+          },
         },
         tooltip: {
           theme: 'light',
-          y: {
-            formatter: function (val) {
-              return val + ' публикаций';
-            }
-          }
-        }
+          y: { formatter: (val) => `${val} publications` },
+        },
       }}
     />
   );

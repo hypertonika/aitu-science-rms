@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { LogIn } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode'
 
@@ -6,108 +7,140 @@ const LoginPage = () => {
   const navigate = useNavigate()
   const [iin, setIIN] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('') 
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-  const handleIINChange = (e) => {
-    const input = e.target.value.toLowerCase()
-    const isNumeric = /^\d*$/.test(input) 
-    const isAllowedText = /^[admin]*$/.test(input)
+  const handleIINChange = (event) => {
+    const input = event.target.value.trim().toLowerCase()
+    const isNumeric = /^\d*$/.test(input)
+    const isAdminAlias = 'admin'.startsWith(input)
 
-    if ((isNumeric && input.length <= 12) || isAllowedText) {
+    if ((isNumeric && input.length <= 12) || isAdminAlias) {
       setIIN(input)
       setError('')
-    } else {
-      setError('Логин должен состоять из цифр (12 символов).')
-    }
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    const isNumeric = /^\d{12}$/.test(iin)
-    const isAdmin = iin === 'admin'
-
-    if (!isNumeric && !isAdmin) {
-      setError('Логин должен быть ровно 12 цифр')
       return
     }
-    
+
+    setError('Use a 12-digit IIN or the admin login.')
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+
+    const isNumericIin = /^\d{12}$/.test(iin)
+    const isAdmin = iin === 'admin'
+
+    if (!isNumericIin && !isAdmin) {
+      setError('Login must be a 12-digit IIN or admin.')
+      return
+    }
+
+    setIsSubmitting(true)
+    setError('')
+
     try {
       const response = await fetch(`${url}/api/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ iin, password }),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(`Ошибка: ${errorData.message || 'Невозможно выполнить запрос'}`)
-      }
-
       const data = await response.json()
 
-      if (data.accessToken && data.refreshToken) {
-        localStorage.setItem('accessToken', data.accessToken)
-        localStorage.setItem('refreshToken', data.refreshToken)
-
-        const decodedToken = jwtDecode(data.accessToken)
-        const userRole = decodedToken.role
-
-        navigate(userRole === 'admin' ? '/home-admin' : '/home-user')
-      } else {
-        throw new Error('Токены не были получены')
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to sign in.')
       }
+
+      localStorage.setItem('accessToken', data.accessToken)
+      localStorage.setItem('refreshToken', data.refreshToken)
+
+      const decodedToken = jwtDecode(data.accessToken)
+      navigate(decodedToken.role === 'admin' ? '/home-admin' : '/home-user')
     } catch (error) {
       console.error('Error during login:', error.message)
-      alert(error.message || 'Произошла ошибка. Попробуйте позже.')
+      setError(error.message || 'Unable to sign in.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="bg-white border border-blue-300 rounded-lg p-8 w-[800px]">
-        <h2 className="text-xl font-bold mb-4 text-gray-900">Вход в систему</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">Логин</label>
-            <input
-              type="text"
-              value={iin}
-              onChange={handleIINChange}
-              required
-              className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950">
+      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-5xl items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="hidden rounded-lg bg-slate-950 p-8 text-white shadow-sm lg:block">
+          <img src="/logo.png" alt="Astana IT University" className="h-14 w-14 object-contain" />
+          <h1 className="mt-8 text-3xl font-bold leading-tight">AITU Science RMS</h1>
+          <p className="mt-4 text-sm leading-6 text-slate-300">
+            Sign in to manage publications, submit records for review, and generate institutional reports.
+          </p>
+          <div className="mt-8 grid gap-3 text-sm text-slate-200">
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4">Researcher workspace</div>
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4">Administrator review queue</div>
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4">Approved publication exports</div>
           </div>
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">Пароль</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <div className="mb-8">
+            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Secure access</p>
+            <h2 className="mt-2 text-3xl font-bold text-slate-950">Sign in</h2>
+            <p className="mt-2 text-sm text-slate-500">Use your IIN or administrator login.</p>
           </div>
-          <button
-            type="submit"
-            className="w-full py-2 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Войти
-          </button>
-        </form>
-        <p className="text-center mt-4 text-sm text-blue-400">
-          Нет аккаунта?{' '}
-          <Link to="/register" className="text-blue-500 hover:underline">
-            Зарегистрируйтесь здесь
-          </Link>
-        </p>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700">Login</label>
+              <input
+                type="text"
+                value={iin}
+                onChange={handleIINChange}
+                required
+                autoComplete="username"
+                className="mt-2 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="12-digit IIN or admin"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                autoComplete="current-password"
+                className="mt-2 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Enter password"
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <LogIn className="h-4 w-4" />
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-slate-500">
+            No account yet?{' '}
+            <Link to="/register" className="font-semibold text-blue-700 hover:text-blue-800">
+              Create one
+            </Link>
+          </p>
+        </section>
       </div>
-    </div>
+    </main>
   )
 }
 

@@ -1,5 +1,4 @@
 import { makeAuthenticatedRequest } from './api'
-import { useNavigate } from 'react-router-dom'
 
 export async function generateReport(url, navigate, selectedSchool = 'all') {
   try {

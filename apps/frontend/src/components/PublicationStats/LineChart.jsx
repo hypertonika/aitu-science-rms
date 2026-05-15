@@ -6,110 +6,54 @@ export default function LineChart({
   labels,
   height = 300
 }) {
-
-//   const total = series.reduce((prev, cur) => prev + cur, 0) || 1;
   return (
     <ReactApexChart
-      className="w-full h-full"
+      className="h-full w-full"
       type="line"
       height={height}
-      series={[{
-        name: seriesName,
-        data: series
-      }]}
+      series={[{ name: seriesName, data: series }]}
       options={{
         chart: {
-          toolbar: {
-            show: false
-          },
+          toolbar: { show: false },
           animations: {
             enabled: true,
-            easing: 'easeinout',
-            speed: 800,
-            animateGradually: {
-              enabled: true,
-              delay: 150
-            },
-            dynamicAnimation: {
-              enabled: true,
-              speed: 350
-            }
-          }
+            easing: "easeinout",
+            speed: 600,
+          },
         },
-        colors: ['#2196f3'],
+        colors: ["#0891b2"],
         stroke: {
-          curve: 'smooth',
-          width: 3
+          curve: "smooth",
+          width: 3,
         },
         markers: {
           size: 5,
-          colors: ['#fff'],
-          strokeColors: '#2196f3',
+          colors: ["#fff"],
+          strokeColors: "#0891b2",
           strokeWidth: 2,
-          hover: {
-            size: 7
-          }
         },
         xaxis: {
           categories: labels,
-          axisBorder: {
-            show: false
-          },
-          axisTicks: {
-            show: false
-          },
-          labels: {
-            style: {
-              colors: '#64748b',
-              fontSize: '12px'
-            }
-          }
+          axisBorder: { show: false },
+          axisTicks: { show: false },
+          labels: { style: { colors: "#64748b", fontSize: "12px" } },
         },
         yaxis: {
-          labels: {
-            style: {
-              colors: '#64748b',
-              fontSize: '12px'
-            }
-          }
+          labels: { style: { colors: "#64748b", fontSize: "12px" } },
         },
         grid: {
-          borderColor: '#f1f5f9',
+          borderColor: "#e2e8f0",
           strokeDashArray: 4,
-          yaxis: {
-            lines: {
-              show: true
-            }
-          }
         },
         dataLabels: {
           enabled: true,
-          style: {
-            fontSize: '12px',
-            colors: ['#1e293b']
-          },
-          offsetY: -5
+          style: { fontSize: "12px", colors: ["#0f172a"] },
+          offsetY: -5,
         },
         tooltip: {
-          theme: 'light',
-          y: {
-            formatter: function (val) {
-              return val + ' публикаций';
-            }
-          }
+          theme: "light",
+          y: { formatter: (val) => `${val} publications` },
         },
-        fill: {
-          type: 'gradient',
-          gradient: {
-            shade: 'light',
-            type: 'vertical',
-            shadeIntensity: 0.4,
-            inverseColors: false,
-            opacityFrom: 0.8,
-            opacityTo: 0.2,
-            stops: [0, 100]
-          }
-        }
       }}
     />
   );

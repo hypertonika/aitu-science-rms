@@ -39,6 +39,9 @@ module.exports = async function handler(req, res) {
       { expiresIn: '7d' }
     );
 
+    user.refreshToken = refreshToken;
+    await user.save();
+
     res.status(200).json({ success: true, accessToken, refreshToken });
   } catch (error) {
     console.error('Ошибка при авторизации пользователя:', error);

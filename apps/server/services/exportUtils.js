@@ -1,4 +1,5 @@
 const PDFDocument = require("pdfkit");
+const ExcelJS = require("exceljs");
 
 function sendCsv(res, publications, filename) {
   const headers = [
@@ -55,6 +56,47 @@ function sendPdf(res, publications, filename, title = "Publication Export") {
   doc.end();
 }
 
+async function sendXlsx(res, publications, filename, title = "Publications") {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "AITU Science RMS";
+  workbook.created = new Date();
+
+  const worksheet = workbook.addWorksheet(title.slice(0, 31));
+  worksheet.columns = [
+    { header: "Title", key: "title", width: 42 },
+    { header: "Authors", key: "authors", width: 36 },
+    { header: "Year", key: "year", width: 12 },
+    { header: "Type", key: "publicationType", width: 18 },
+    { header: "DOI", key: "doi", width: 28 },
+    { header: "Status", key: "status", width: 14 },
+    { header: "Visibility", key: "visibility", width: 16 },
+    { header: "Journal", key: "journal", width: 28 },
+    { header: "Output", key: "output", width: 30 },
+  ];
+
+  worksheet.getRow(1).font = { bold: true };
+  worksheet.views = [{ state: "frozen", ySplit: 1 }];
+
+  publications.forEach((pub) => {
+    worksheet.addRow({
+      title: pub.title || "",
+      authors: pub.authors || "",
+      year: pub.year || "",
+      publicationType: pub.publicationType || "",
+      doi: pub.doi || "",
+      status: pub.status || "",
+      visibility: pub.visibility || "",
+      journal: pub.journal || "",
+      output: pub.output || "",
+    });
+  });
+
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  await workbook.xlsx.write(res);
+  res.end();
+}
+
 function csvCell(value) {
   const text = String(value ?? "");
   return `"${text.replace(/"/g, '""')}"`;
@@ -63,4 +105,5 @@ function csvCell(value) {
 module.exports = {
   sendCsv,
   sendPdf,
+  sendXlsx,
 };

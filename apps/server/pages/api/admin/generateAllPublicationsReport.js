@@ -17,6 +17,10 @@ module.exports = async function handler(req, res) {
     return; // Завершаем обработку, если верификация не прошла
   }
 
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+
   try {
     const { higherSchool = 'all' } = req.body;
     const publicationsByUser = {};

@@ -1,50 +1,32 @@
-import React, { useEffect, useState } from "react";
+import { BarChart3, CalendarDays } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { publicationTypeMap } from "../../constants/publications";
 import { makeAuthenticatedRequest } from "../../services/api";
-import { jwtDecode } from "jwt-decode";
-import ReactApexChart from "react-apexcharts";
 import BarChart from "./BarChart";
-import { publicationTypeMap } from "../../pages/PublicationPage/PublicationsPage";
 import LineChart from "./LineChart";
 
-const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const url = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-export default function PublicationStats() {
+export default function PublicationStats({ compact = false }) {
   const [data, setData] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          navigate("/login");
-          return;
-        }
-
-        const decodedToken = jwtDecode(token);
-        // if (decodedToken.role !== 'admin') {
-        //   navigate('/home-user');
-        //   return;
-        // }
-
         const response = await makeAuthenticatedRequest(
           `${url}/api/user/stats`,
-          { method: "GET", headers: { Authorization: `Bearer ${token}` } },
+          { method: "GET" },
           navigate
         );
 
-        if (response.status === 200) {
-          console.log("sasts успешно загружены!");
-          console.log(response);
-          setData(response.data); // Здесь данные из Axios
-        } else {
-          alert("Не удалось загрузить stats");
+        if (response?.status === 200) {
+          setData(response.data);
         }
       } catch (error) {
-        alert("Произошла ошибка при загрузке stats");
+        console.error("Stats loading failed:", error);
       } finally {
         setIsLoading(false);
       }
@@ -53,59 +35,68 @@ export default function PublicationStats() {
     fetchData();
   }, [navigate]);
 
-  return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full px-4">
-      {/* Publications by Type */}
-      <div className="bg-gradient-to-br from-cyan-50 to-white rounded-lg shadow-md p-6 border border-cyan-100">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-cyan-100 rounded-lg">
-            <svg className="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-gray-800">Статистика по типам публикаций</h2>
-        </div>
-        <div className="w-full">
-          {data?.types && (
-            <BarChart
-              labels={Object.keys(data.types).map(k => {
-                const label = publicationTypeMap[k];
-                return label
-                  .replace('Научные труды (Scopus/Web of Science)', 'Scopus/WoS')
-                  .replace('Статьи РК и не включенные в Scopus/WoS', 'Статьи РК')
-                  .replace('Патенты, авторское свидетельство', 'Патенты')
-                  .replace('Материалы конференций', 'Конференции');
-              })}
-              series={Object.keys(data.types).map(k => data.types[k])}
-              height={300}
-              width="100%"
-            />
-          )}
-        </div>
-      </div>
+  const typeKeys = Object.keys(data.types || {});
+  const yearKeys = Object.keys(data.years || {}).sort();
 
-      {/* Publications by Year */}
-      <div className="bg-gradient-to-br from-violet-50 to-white rounded-lg shadow-md p-6 border border-violet-100">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-violet-100 rounded-lg">
-            <svg className="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-gray-800">Статистика по годам</h2>
-        </div>
-        <div className="w-full">
-          {data?.years && (
-            <LineChart
-              seriesName="Публикации"
-              labels={Object.keys(data.years)}
-              series={Object.keys(data.years).map(k => data.years[k])}
-              height={300}
-              width="100%"
-            />
-          )}
-        </div>
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="h-80 animate-pulse rounded-lg border border-slate-200 bg-white" />
+        <div className="h-80 animate-pulse rounded-lg border border-slate-200 bg-white" />
       </div>
+    );
+  }
+
+  return (
+    <div className={`grid gap-4 ${compact ? "lg:grid-cols-2" : "mx-auto w-full max-w-5xl lg:grid-cols-2"}`}>
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-5 flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+            <BarChart3 className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-base font-bold text-slate-950">Publications by type</h2>
+            <p className="text-sm text-slate-500">Approved records grouped by category.</p>
+          </div>
+        </div>
+
+        {typeKeys.length > 0 ? (
+          <BarChart
+            labels={typeKeys.map((key) => publicationTypeMap[key] || key)}
+            series={typeKeys.map((key) => data.types[key])}
+            height={300}
+          />
+        ) : (
+          <p className="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-500">
+            No approved publications yet.
+          </p>
+        )}
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-5 flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700">
+            <CalendarDays className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-base font-bold text-slate-950">Publication timeline</h2>
+            <p className="text-sm text-slate-500">Approved records by publication year.</p>
+          </div>
+        </div>
+
+        {yearKeys.length > 0 ? (
+          <LineChart
+            seriesName="Publications"
+            labels={yearKeys}
+            series={yearKeys.map((key) => data.years[key])}
+            height={300}
+          />
+        ) : (
+          <p className="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-500">
+            No yearly data yet.
+          </p>
+        )}
+      </section>
     </div>
   );
 }

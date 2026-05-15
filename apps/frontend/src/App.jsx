@@ -9,12 +9,12 @@ import AdminHome from './pages/AdminHome'
 import AdminPage from './pages/AdminPage'
 import AdminPublications from './pages/AdminPublications'
 import UserProfile from './pages/UserProfile'
-import Navbar from './components/Navbar'
 import ErrorMessage from './components/ErrorMessage'
 import RootLayout from './layouts/RootLayout'
 import './global.css'
 import './App.css'
 import PublicationsPage from './pages/PublicationPage/PublicationsPage'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
@@ -25,14 +25,14 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/resume" element={<UserResume />} />
-          <Route path="/home-user" element={<UserHome />} />
-          <Route path="/publications" element={<PublicationsPage />} />
-          <Route path="/home-admin" element={<AdminHome />} />
-          <Route path="/admin-users" element={<AdminPage />} />
-          <Route path="/admin-publications" element={<AdminPublications />} />
-          <Route path="/admin/user/:iin" element={<UserProfile />} />
+          <Route path="/dashboard" element={<ProtectedRoute roles={['user', 'admin']}><Dashboard /></ProtectedRoute>} />
+          <Route path="/resume" element={<ProtectedRoute roles={['user']}><UserResume /></ProtectedRoute>} />
+          <Route path="/home-user" element={<ProtectedRoute roles={['user']}><UserHome /></ProtectedRoute>} />
+          <Route path="/publications" element={<ProtectedRoute roles={['user', 'admin']}><PublicationsPage /></ProtectedRoute>} />
+          <Route path="/home-admin" element={<ProtectedRoute roles={['admin']}><AdminHome /></ProtectedRoute>} />
+          <Route path="/admin-users" element={<ProtectedRoute roles={['admin']}><AdminPage /></ProtectedRoute>} />
+          <Route path="/admin-publications" element={<ProtectedRoute roles={['admin']}><AdminPublications /></ProtectedRoute>} />
+          <Route path="/admin/user/:iin" element={<ProtectedRoute roles={['admin']}><UserProfile /></ProtectedRoute>} />
         </Routes>
         <ErrorMessage message={""} />
       </RootLayout>

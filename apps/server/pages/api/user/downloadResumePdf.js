@@ -9,7 +9,14 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const filePath = path.resolve(req.query.path);
+  const reportsDir = path.resolve(__dirname, '../../../services/reports');
+  const filePath = path.resolve(req.query.path || '');
+  const isAllowedPath = filePath.startsWith(`${reportsDir}${path.sep}`);
+  const isPdf = path.extname(filePath).toLowerCase() === '.pdf';
+
+  if (!isAllowedPath || !isPdf) {
+    return res.status(403).json({ message: 'Invalid file path' });
+  }
   
   if (fs.existsSync(filePath)) {
     const fileName = encodeURIComponent(path.basename(filePath));

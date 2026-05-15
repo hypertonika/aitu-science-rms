@@ -9,7 +9,7 @@ const {
   buildPublicationFilters,
   findDuplicatePublication,
 } = require("../../../services/publicationUtils");
-const { sendCsv, sendPdf } = require("../../../services/exportUtils");
+const { sendCsv, sendPdf, sendXlsx } = require("../../../services/exportUtils");
 
 const router = express.Router();
 
@@ -59,7 +59,7 @@ const upload = multer({
 
 router.get("/publications/export", verifyToken, authenticateUser, async (req, res) => {
   try {
-    const format = req.query.format === "pdf" ? "pdf" : "csv";
+    const format = ["csv", "pdf", "xlsx"].includes(req.query.format) ? req.query.format : "csv";
     const filter = {
       iin: req.user.iin,
       status: "approved",
@@ -69,6 +69,9 @@ router.get("/publications/export", verifyToken, authenticateUser, async (req, re
 
     if (format === "pdf") {
       return sendPdf(res, publications, "my_publications.pdf", "My Approved Publications");
+    }
+    if (format === "xlsx") {
+      return sendXlsx(res, publications, "my_publications.xlsx", "My Approved Publications");
     }
     return sendCsv(res, publications, "my_publications.csv");
   } catch (error) {

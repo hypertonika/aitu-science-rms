@@ -1,178 +1,201 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { crossrefService } from '../../services/crossrefService';
-import { makeAuthenticatedRequest } from '../../services/api';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ExternalLink, Import, Search } from 'lucide-react'
+import { crossrefService } from '../../services/crossrefService'
+import { makeAuthenticatedRequest } from '../../services/api'
 
-// Количество публикаций на странице
-const ITEMS_PER_PAGE = 3;
-
-const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const ITEMS_PER_PAGE = 3
+const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 export default function CrossrefImport({ onImportSuccess }) {
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [importingDoi, setImportingDoi] = useState(null);
+  const navigate = useNavigate()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [importingDoi, setImportingDoi] = useState(null)
+  const [message, setMessage] = useState('')
 
-  // Вычисляем общее количество страниц
-  const totalPages = Math.ceil(searchResults.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(searchResults.length / ITEMS_PER_PAGE)
+  const currentItems = searchResults.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
 
-  // Получаем публикации для текущей страницы
-  const getCurrentPageItems = () => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return searchResults.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  };
+  const handleSearch = async (event) => {
+    event.preventDefault()
+    if (!searchQuery.trim()) return
 
-  // Поиск публикаций
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setCurrentPage(1); // Сбрасываем страницу при новом поиске
+    setIsLoading(true)
+    setMessage('')
+    setCurrentPage(1)
+
     try {
-      const results = await crossrefService.searchWorksByAuthor(searchQuery);
-      setSearchResults(results);
+      const results = await crossrefService.searchWorksByAuthor(searchQuery)
+      setSearchResults(results)
+      if (results.length === 0) {
+        setMessage('No Crossref records found for this query.')
+      }
     } catch (error) {
-      console.error('Error searching publications:', error);
-      alert('Ошибка при поиске публикаций');
+      console.error('Crossref search failed:', error)
+      setMessage('Crossref search failed. Please try another query.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  // Открыть публикацию по DOI
   const handlePublicationClick = (doi) => {
-    if (!doi) return;
-    const doiUrl = doi.startsWith('http') ? doi : `https://doi.org/${doi}`;
-    window.open(doiUrl, '_blank');
-  };
+    if (!doi) return
+    const doiUrl = doi.startsWith('http') ? doi : `https://doi.org/${doi}`
+    window.open(doiUrl, '_blank')
+  }
 
   const handleImportDraft = async (publication, event) => {
-    event.stopPropagation();
-    const token = localStorage.getItem('accessToken');
+    event.stopPropagation()
+    const token = localStorage.getItem('accessToken')
     if (!token) {
-      navigate('/login');
-      return;
+      navigate('/login')
+      return
     }
 
-    const formData = new FormData();
-    formData.append('title', publication.title || '');
-    formData.append('authors', publication.authors || '');
-    formData.append('year', publication.year || new Date().getFullYear());
-    formData.append('output', publication.output || publication.journal || '');
-    formData.append('doi', publication.doi || '');
-    formData.append('publicationType', publication.publicationType || publication.type || 'articles');
-    formData.append('journal', publication.journal || '');
-    formData.append('citations', publication.citations || 0);
-    formData.append('source', 'crossref');
-    formData.append('visibility', 'private');
+    const formData = new FormData()
+    formData.append('title', publication.title || '')
+    formData.append('authors', publication.authors || '')
+    formData.append('year', publication.year || new Date().getFullYear())
+    formData.append('output', publication.output || publication.journal || '')
+    formData.append('doi', publication.doi || '')
+    formData.append('publicationType', publication.publicationType || publication.type || 'articles')
+    formData.append('journal', publication.journal || '')
+    formData.append('citations', publication.citations || 0)
+    formData.append('source', 'crossref')
+    formData.append('visibility', 'private')
 
     try {
-      setImportingDoi(publication.doi);
-      await makeAuthenticatedRequest(`${url}/api/user/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        data: formData,
-      }, navigate);
-      onImportSuccess?.();
+      setMessage('')
+      setImportingDoi(publication.doi)
+      await makeAuthenticatedRequest(
+        `${url}/api/user/upload`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          data: formData,
+        },
+        navigate
+      )
+      setMessage('Imported as a draft. Review it before submission.')
+      onImportSuccess?.()
     } catch (error) {
-      alert(error.response?.status === 409 ? 'Такая публикация уже есть в системе.' : 'Не удалось импортировать публикацию.');
+      console.error('Crossref import failed:', error)
+      setMessage(
+        error.response?.status === 409
+          ? 'This publication already exists in the system.'
+          : 'Could not import the selected publication.'
+      )
     } finally {
-      setImportingDoi(null);
+      setImportingDoi(null)
     }
-  };
+  }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Поиск публикаций в Crossref</h2>
-      
-      {/* Форма поиска */}
-      <form onSubmit={handleSearch} className="mb-8">
-        <div className="flex gap-4">
+    <div className="p-5">
+      <div className="mb-5 flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+          <Import className="h-5 w-5" />
+        </span>
+        <div>
+          <h2 className="text-base font-bold text-slate-950">Crossref import</h2>
+          <p className="text-sm text-slate-500">Search by author, title or DOI and save a result as a draft.</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Введите имя автора или DOI публикации..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Author, title or DOI"
+            className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 shadow-sm transition-colors"
-          >
-            {isLoading ? 'Поиск...' : 'Найти'}
-          </button>
         </div>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="inline-flex h-11 items-center justify-center rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-50"
+        >
+          {isLoading ? 'Searching...' : 'Search'}
+        </button>
       </form>
 
-      {/* Результаты поиска */}
-      {searchResults.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-xl font-semibold mb-4 text-gray-700">Результаты поиска</h3>
-          <div className="space-y-4">
-            {getCurrentPageItems().map((publication) => (
-              <div
-                key={publication.doi}
-                onClick={() => handlePublicationClick(publication.doi)}
-                className="p-6 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md hover:border-blue-300 group"
-              >
-                <h4 className="font-medium text-lg mb-2 text-gray-900 group-hover:text-blue-600">{publication.title}</h4>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <p><span className="font-medium">Авторы:</span> {publication.authors}</p>
-                  <p><span className="font-medium">Журнал:</span> {publication.journal} ({publication.year})</p>
-                  <p><span className="font-medium">DOI:</span> 
-                    <span className="text-blue-600 hover:underline ml-1">{publication.doi}</span>
+      {message && (
+        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+          {message}
+        </div>
+      )}
+
+      {currentItems.length > 0 && (
+        <div className="mt-5 space-y-3">
+          {currentItems.map((publication) => (
+            <div
+              key={publication.doi || publication.title}
+              role="button"
+              tabIndex={0}
+              onClick={() => handlePublicationClick(publication.doi)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  handlePublicationClick(publication.doi)
+                }
+              }}
+              className="block w-full rounded-lg border border-slate-200 bg-white p-4 text-left transition hover:border-blue-200 hover:shadow-sm"
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="line-clamp-2 text-sm font-bold leading-6 text-slate-950">
+                    {publication.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-600">{publication.authors}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {publication.journal || 'Unknown source'} {publication.year ? `(${publication.year})` : ''}
                   </p>
-                  <p><span className="font-medium">Цитирований:</span> {publication.citations || 0}</p>
+                  {publication.doi && (
+                    <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-700">
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      {publication.doi}
+                    </p>
+                  )}
                 </div>
                 <button
                   type="button"
                   onClick={(event) => handleImportDraft(publication, event)}
-                  disabled={importingDoi === publication.doi}
-                  className="mt-4 px-4 py-2 text-sm text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
-                  {importingDoi === publication.doi ? 'Импорт...' : 'Import draft'}
+                  {importingDoi === publication.doi ? 'Importing...' : 'Import draft'}
                 </button>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
 
-          {/* Пагинация */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center space-x-2 mt-6">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-4 py-2 rounded-lg border border-gray-300 disabled:opacity-50 hover:bg-gray-50 transition-colors"
-              >
-                ←
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <div className="flex justify-center gap-2 pt-2">
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
                 <button
                   key={page}
+                  type="button"
                   onClick={() => setCurrentPage(page)}
-                  className={`px-4 py-2 rounded-lg border ${
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
                     currentPage === page
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'border-gray-300 hover:bg-gray-50'
-                  } transition-colors`}
+                      ? 'bg-blue-700 text-white'
+                      : 'border border-slate-300 bg-white text-slate-700'
+                  }`}
                 >
                   {page}
                 </button>
               ))}
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 rounded-lg border border-gray-300 disabled:opacity-50 hover:bg-gray-50 transition-colors"
-              >
-                →
-              </button>
             </div>
           )}
         </div>
       )}
     </div>
-  );
-} 
+  )
+}

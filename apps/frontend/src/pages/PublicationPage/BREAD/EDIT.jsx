@@ -14,7 +14,6 @@ export default function EDIT({ pub, updateData, resetPage }) {
 
   const {
     register,
-    watch,
     handleSubmit,
     reset,
     formState: { errors },
@@ -121,7 +120,6 @@ export default function EDIT({ pub, updateData, resetPage }) {
             if (typeof resetPage === 'function') {
               resetPage();
             }
-            alert('Публикация успешно обновлена!');
             console.log('Список публикаций обновлен');
           } catch (updateError) {
             console.error('Ошибка при обновлении списка:', updateError);
@@ -160,15 +158,13 @@ export default function EDIT({ pub, updateData, resetPage }) {
     setFile(file);
   };
 
-  console.log(pub);
-
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="py-1 px-2 text-xs text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="inline-flex items-center rounded-lg bg-blue-700 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-800"
       >
-        Редактировать
+        Edit
       </button>
       <CustomDialog isOpen={isOpen} title={"Редактировать публикацию"} onClose={onClose}>
         <form

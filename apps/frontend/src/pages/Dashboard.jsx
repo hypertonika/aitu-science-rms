@@ -73,7 +73,7 @@ export default function UserProfile() {
     };
 
     fetchUserData();
-  }, [navigate, iin]);
+  }, [navigate, iin, url]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

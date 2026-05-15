@@ -1,36 +1,35 @@
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
 
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-
-if (!url) {
-  console.error('VITE_API_URL не задан в окружении')
-}
 
 export async function refreshAccessToken(navigate) {
   const refreshToken = localStorage.getItem('refreshToken')
 
   if (!refreshToken) {
-    console.error('Отсутствует Refresh Token')
     return null
   }
 
   try {
     const response = await axios.post(`${url}/api/auth/refresh-token`, { refreshToken })
 
-    if (response.status === 200) {
-      localStorage.setItem('accessToken', response.data.accessToken)
-      return response.data.accessToken
-    } else {
-      throw new Error('Ошибка при обновлении токена')
+    localStorage.setItem('accessToken', response.data.accessToken)
+    if (response.data.refreshToken) {
+      localStorage.setItem('refreshToken', response.data.refreshToken)
     }
+
+    return response.data.accessToken
   } catch (error) {
-    console.error('Ошибка при обновлении токена:', error)
+    console.error('Token refresh failed:', error.message)
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+
     if (navigate) {
       navigate('/login')
     } else {
       window.location.href = '/login'
     }
+
+    return null
   }
 }
 
@@ -38,8 +37,10 @@ export async function makeAuthenticatedRequest(endpoint, options = {}, navigate,
   let accessToken = localStorage.getItem('accessToken')
 
   if (!accessToken) {
-    console.error("No access token found in localStorage")
-    return null
+    accessToken = await refreshAccessToken(navigate)
+    if (!accessToken) {
+      return null
+    }
   }
 
   options.headers = {
@@ -48,23 +49,19 @@ export async function makeAuthenticatedRequest(endpoint, options = {}, navigate,
   }
 
   try {
-    const response = await axios(endpoint, options)
+    return await axios(endpoint, options)
+  } catch (error) {
+    if (error.response?.status === 401 && retry) {
+      const nextAccessToken = await refreshAccessToken(navigate)
 
-    if (response.status === 401 && retry) {
-      console.warn("Unauthorized. Attempting token refresh...")
-      accessToken = await refreshAccessToken(navigate)
-      if (accessToken) {
-        options.headers.Authorization = `Bearer ${accessToken}`
+      if (nextAccessToken) {
+        options.headers.Authorization = `Bearer ${nextAccessToken}`
         return makeAuthenticatedRequest(endpoint, options, navigate, false)
-      } else {
-        console.error("Token refresh failed. Redirecting to login.")
-        return null
       }
+
+      return null
     }
 
-    return response
-  } catch (error) {
-    console.error('Ошибка при выполнении запроса:', error.message)
     throw error
   }
 }

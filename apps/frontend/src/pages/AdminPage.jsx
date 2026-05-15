@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { jwtDecode } from 'jwt-decode'
+import { createElement, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowRight, Search, ShieldCheck, UserRound, Users } from 'lucide-react'
 import { makeAuthenticatedRequest } from '../services/api'
 import Navbar from '../components/Navbar'
-import { Link } from 'react-router-dom'
+
+const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 export default function AdminPage() {
   const navigate = useNavigate()
@@ -11,135 +12,195 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedRole, setSelectedRole] = useState('all')
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      navigate('/login')
-      return
-    }
-    
-    const decodedToken = jwtDecode(token)
-    const userRole = decodedToken.role
-    if (userRole !== 'admin') {
-      alert('Доступ запрещен: только для администраторов')
-      navigate('/home-user')
-      return
+    const loadUsers = async () => {
+      try {
+        const response = await makeAuthenticatedRequest(
+          `${url}/api/admin/users`,
+          { method: 'GET' },
+          navigate
+        )
+
+        if (response?.data?.success) {
+          setUsers(response.data.users)
+        } else {
+          setMessage('Could not load user data.')
+        }
+      } catch (error) {
+        console.error('Users loading failed:', error)
+        setMessage('Could not load users.')
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    makeAuthenticatedRequest(`${url}/api/admin/users`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }, navigate)
-      .then((data) => {
-        if (data.data.success) {
-          setUsers(data.data.users)
-        } else {
-          alert('Произошла ошибка при загрузке данных')
-          navigate('/login')
-        }
-      })
-      .catch((error) => {
-        console.error('Ошибка при загрузке пользователей:', error)
-      })
-      .finally(() => {
-        setIsLoading(false)
-      })
+    loadUsers()
   }, [navigate])
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.iin.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesRole = selectedRole === 'all' || user.role === selectedRole
-    return matchesSearch && matchesRole
-  })
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const query = searchTerm.toLowerCase()
+      const matchesSearch =
+        user.iin?.toLowerCase().includes(query) ||
+        user.fullName?.toLowerCase().includes(query) ||
+        user.email?.toLowerCase().includes(query)
+      const matchesRole = selectedRole === 'all' || user.role === selectedRole
+      return matchesSearch && matchesRole
+    })
+  }, [searchTerm, selectedRole, users])
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    )
-  }
+  const adminCount = users.filter((user) => user.role === 'admin').length
+  const researcherCount = users.length - adminCount
 
   return (
-    <>
+    <div className="min-h-screen bg-slate-50">
       <Navbar role="admin" />
-      <div className="min-h-screen bg-gray-100 p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h1 className="text-2xl font-bold text-gray-800 mb-4">Административная панель</h1>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Поиск по ИИН..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                />
+
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+                <Users className="h-4 w-4" />
+                User directory
               </div>
-              <div className="w-full md:w-48">
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                >
-                  <option value="all">Все роли</option>
-                  <option value="admin">Администратор</option>
-                  <option value="user">Пользователь</option>
-                </select>
-              </div>
+              <h1 className="text-3xl font-bold text-slate-950">Users</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Find researchers, open profiles and review their publication history.
+              </p>
             </div>
           </div>
+        </section>
 
-          {/* Users Table */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {message && (
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm">
+            {message}
+          </div>
+        )}
+
+        <section className="grid gap-3 sm:grid-cols-3">
+          <SummaryCard label="Total users" value={users.length} icon={Users} tone="blue" />
+          <SummaryCard label="Researchers" value={researcherCount} icon={UserRound} tone="emerald" />
+          <SummaryCard label="Admins" value={adminCount} icon={ShieldCheck} tone="amber" />
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by IIN, name or email"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+            <select
+              value={selectedRole}
+              onChange={(event) => setSelectedRole(event.target.value)}
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="all">All roles</option>
+              <option value="admin">Admins</option>
+              <option value="user">Researchers</option>
+            </select>
+          </div>
+        </section>
+
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          {isLoading ? (
+            <div className="space-y-3 p-5">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="h-14 animate-pulse rounded-lg bg-slate-100" />
+              ))}
+            </div>
+          ) : filteredUsers.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ИИН</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Роль</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                    <TableHead>IIN</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Profile</TableHead>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-200 bg-white">
                   {filteredUsers.map((user) => (
-                    <tr key={user.iin} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{user.iin}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                    <tr key={user.iin} className="transition hover:bg-slate-50">
+                      <TableCell>{user.iin}</TableCell>
+                      <TableCell>{user.fullName || 'Not specified'}</TableCell>
+                      <TableCell>{user.email || 'Not specified'}</TableCell>
+                      <TableCell>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                          user.role === 'admin'
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-emerald-50 text-emerald-700'
                         }`}>
-                          {user.role === 'admin' ? 'Администратор' : 'Пользователь'}
+                          {user.role === 'admin' ? 'Admin' : 'Researcher'}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                      </TableCell>
+                      <TableCell>
                         <Link
                           to={`/admin/user/${user.iin}`}
-                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
                         >
-                          Просмотр профиля
+                          Open
+                          <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
-                      </td>
+                      </TableCell>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {filteredUsers.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Пользователи не найдены</p>
-              </div>
-            )}
-          </div>
-        </div>
+          ) : (
+            <div className="flex min-h-80 flex-col items-center justify-center px-6 text-center">
+              <Users className="mb-4 h-10 w-10 text-slate-400" />
+              <h2 className="text-lg font-bold text-slate-950">No users found</h2>
+              <p className="mt-2 text-sm text-slate-500">Adjust search or role filters.</p>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  )
+}
+
+function SummaryCard({ label, value, icon, tone }) {
+  const tones = {
+    blue: 'bg-blue-50 text-blue-700',
+    emerald: 'bg-emerald-50 text-emerald-700',
+    amber: 'bg-amber-50 text-amber-700',
+  }
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg ${tones[tone]}`}>
+        {createElement(icon, { className: 'h-5 w-5' })}
       </div>
-    </>
+      <p className="text-3xl font-bold text-slate-950">{value}</p>
+      <p className="mt-1 text-sm font-medium text-slate-500">{label}</p>
+    </div>
+  )
+}
+
+function TableHead({ children }) {
+  return (
+    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+      {children}
+    </th>
+  )
+}
+
+function TableCell({ children }) {
+  return (
+    <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700">
+      {children}
+    </td>
   )
 }

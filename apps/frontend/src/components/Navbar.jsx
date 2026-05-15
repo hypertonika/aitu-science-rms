@@ -1,115 +1,106 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { BookOpen, LayoutDashboard, LogOut, Menu, User, Users, X } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { createElement } from 'react'
 import { useState } from 'react'
 
-const Navbar = ({ role }) => {
+const navByRole = {
+  admin: [
+    { to: '/home-admin', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/admin-publications', label: 'Publications', icon: BookOpen },
+    { to: '/admin-users', label: 'Researchers', icon: Users },
+  ],
+  user: [
+    { to: '/home-user', label: 'Home', icon: LayoutDashboard },
+    { to: '/publications', label: 'Publications', icon: BookOpen },
+  ],
+}
+
+const Navbar = ({ role = 'user' }) => {
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  
+  const navItems = navByRole[role] || navByRole.user
+
   const handleLogout = () => {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
+    setIsMobileMenuOpen(false)
     navigate('/login')
   }
 
+  const linkClass = ({ isActive }) =>
+    [
+      'inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition',
+      isActive ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
+    ].join(' ')
+
   return (
-    <nav className="bg-gray-800 p-4 border-b border-gray-700">
-      <div className="container mx-auto flex justify-between items-center">
-        {/* Logo/Brand - can be added here if needed */}
-        {/* <Link to="/" className="text-white text-lg font-bold">Your Logo</Link> */}
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+        <NavLink to={role === 'admin' ? '/home-admin' : '/home-user'} className="flex items-center gap-3">
+          <img src="/logo.png" alt="AITU" className="h-9 w-9 object-contain" />
+          <div className="leading-tight">
+            <p className="text-sm font-bold text-slate-950">AITU Science RMS</p>
+            <p className="text-xs text-slate-500">{role === 'admin' ? 'Admin workspace' : 'Researcher workspace'}</p>
+          </div>
+        </NavLink>
 
-        {/* Desktop Menu Links */}
-        <div className="hidden md:flex space-x-6">
-          <Link to={role === 'admin' ? "/home-admin" : "/home-user"} className="text-white hover:bg-gray-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200">
-            Главная
-          </Link>
-          <Link to={role === 'admin' ? "/admin-publications" : "/publications"} className="text-white hover:bg-gray-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200">
-            Публикации
-          </Link>
-          {role === 'admin' && (
-            <Link to="/admin-users" className="text-white hover:bg-gray-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200">
-              Все сотрудники
-            </Link>
-          )}
-        </div>
+        <nav className="hidden items-center gap-1 md:flex">
+          {navItems.map(({ to, label, icon }) => (
+            <NavLink key={to} to={to} className={linkClass}>
+              {createElement(icon, { className: 'h-4 w-4' })}
+              {label}
+            </NavLink>
+          ))}
+        </nav>
 
-        {/* Profile and Logout - Visible on Desktop */}
-        <div className="hidden md:flex items-center space-x-4">
-          <Link to="/dashboard" className="text-white hover:bg-gray-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200">
-            Профиль
-          </Link>
-          <button 
-            onClick={handleLogout} 
-            className="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md text-sm font-medium transition duration-200"
+        <div className="hidden items-center gap-2 md:flex">
+          <NavLink to="/dashboard" className={linkClass}>
+            <User className="h-4 w-4" />
+            Profile
+          </NavLink>
+          <button
+            onClick={handleLogout}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
           >
-            Выйти
+            <LogOut className="h-4 w-4" />
+            Sign out
           </button>
         </div>
 
-        {/* Mobile Menu Button */}
-        <div className="md:hidden flex justify-end w-full">
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="text-white hover:text-white focus:outline-none focus:text-white"
-          >
-            <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-              {isMobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-        </div>
+        <button
+          onClick={() => setIsMobileMenuOpen((value) => !value)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 md:hidden"
+          aria-label="Toggle navigation"
+        >
+          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </div>
 
-      {/* Mobile Menu - Dropdown */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-gray-800 rounded-b-lg mt-2 border-t border-gray-700">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link 
-              to={role === 'admin' ? "/home-admin" : "/home-user"} 
-              className="text-white hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Главная
-            </Link>
-            <Link 
-              to={role === 'admin' ? "/admin-publications" : "/publications"} 
-              className="text-white hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Публикации
-            </Link>
-            {role === 'admin' && (
-              <Link 
-                to="/admin-users" 
-                className="text-white hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+        <div className="border-t border-slate-200 bg-white px-4 py-3 md:hidden">
+          <div className="grid gap-1">
+            {[...navItems, { to: '/dashboard', label: 'Profile', icon: User }].map(({ to, label, icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={linkClass}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Все сотрудники
-              </Link>
-            )}
-            <Link 
-              to="/dashboard" 
-              className="text-white hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
+                {createElement(icon, { className: 'h-4 w-4' })}
+                {label}
+              </NavLink>
+            ))}
+            <button
+              onClick={handleLogout}
+              className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700"
             >
-              Профиль
-            </Link>
-          </div>
-          <div className="pt-4 pb-3 border-t border-gray-700">
-            <div className="mt-3 px-2">
-              <button 
-                onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} 
-                className="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-base font-medium transition duration-200"
-              >
-                Выйти
-              </button>
-            </div>
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
           </div>
         </div>
       )}
-    </nav>
+    </header>
   )
 }
 

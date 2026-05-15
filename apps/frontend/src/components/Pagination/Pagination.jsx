@@ -1,30 +1,26 @@
-import React from 'react';
-
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1)
 
   return (
-    <div className="flex justify-center items-center space-x-2 mt-6">
+    <nav className="flex flex-wrap items-center justify-center gap-2">
       <button
+        type="button"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`px-3 py-1 rounded-lg ${
-          currentPage === 1
-            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            : 'bg-indigo-500 text-white hover:bg-indigo-600'
-        }`}
+        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Назад
+        Previous
       </button>
 
       {pages.map((page) => (
         <button
           key={page}
+          type="button"
           onClick={() => onPageChange(page)}
-          className={`px-3 py-1 rounded-lg ${
+          className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
             currentPage === page
-              ? 'bg-indigo-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ? 'bg-blue-700 text-white'
+              : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
           }`}
         >
           {page}
@@ -32,18 +28,15 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
       ))}
 
       <button
+        type="button"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`px-3 py-1 rounded-lg ${
-          currentPage === totalPages
-            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            : 'bg-indigo-500 text-white hover:bg-indigo-600'
-        }`}
+        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Вперед
+        Next
       </button>
-    </div>
-  );
-};
+    </nav>
+  )
+}
 
-export default Pagination; 
+export default Pagination

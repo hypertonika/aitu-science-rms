@@ -3,7 +3,7 @@ import CustomDialog from "../../../components/CustomDialog/CustomDialog";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { makeAuthenticatedRequest } from "../../../services/api";
-import { publicationTypeMap } from "../PublicationsPage"; 
+import { publicationTypeMap } from "../../../constants/publications"; 
 import {
   Listbox,
   ListboxButton,
@@ -170,9 +170,9 @@ export default function ADD({ updateData }) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="w-full sm:w-auto py-2 px-4 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
+        className="inline-flex items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
       >
-        Добавить публикацию
+        Add publication
       </button>
       <CustomDialog
         isOpen={isOpen}

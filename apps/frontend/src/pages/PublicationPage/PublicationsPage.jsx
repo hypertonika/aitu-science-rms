@@ -1,6 +1,18 @@
-import { useCallback, useEffect, useState } from 'react'
+import { createElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode'
+import {
+  Download,
+  ExternalLink,
+  FileDown,
+  FileSpreadsheet,
+  FileText,
+  Filter,
+  Import,
+  Search,
+  Send,
+  Trash2,
+} from 'lucide-react'
 import { makeAuthenticatedRequest } from '../../services/api'
 import { generateUserReport } from '../../services/reportUtils'
 import { getUserIIN } from '../../services/userUtils'
@@ -8,31 +20,23 @@ import Navbar from '../../components/Navbar'
 import ErrorMessage from '../../components/ErrorMessage'
 import ADD from './BREAD/ADD'
 import EDIT from './BREAD/EDIT'
-import PublicationComponents from '../../components/FilterComponents/PublicationComponents'
 import Pagination from '../../components/Pagination/Pagination'
 import CrossrefImport from '../../components/PublicationImport/CrossrefImport'
+import {
+  allHigherSchools,
+  publicationTypeMap,
+  statusMap,
+  visibilityMap,
+} from '../../constants/publications'
 
+const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const itemsPerPage = 8
 
-export const publicationTypeMap = {
-  scopus_wos: 'Научные труды (Scopus/Web of Science)',
-  koknvo: 'КОКСНВО',
-  conference: 'Материалы конференций',
-  articles: 'Статьи РК и не включенные в Scopus/WoS',
-  books: 'Монографии, книги и учебные материалы',
-  patents: 'Патенты, авторское свидетельство',
-}
-
-export const statusMap = {
-  draft: 'Draft',
-  submitted: 'Submitted',
-  approved: 'Approved',
-  rejected: 'Rejected',
-}
-
-export const visibilityMap = {
-  private: 'Private',
-  institutional: 'Institutional',
-  public: 'Public',
+const statusStyles = {
+  draft: 'border-slate-200 bg-slate-100 text-slate-700',
+  submitted: 'border-amber-200 bg-amber-50 text-amber-700',
+  approved: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  rejected: 'border-rose-200 bg-rose-50 text-rose-700',
 }
 
 export default function PublicationsPage() {
@@ -40,162 +44,159 @@ export default function PublicationsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [publications, setPublications] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
-  const [type, setType] = useState(null);
-  const [year, setYear] = useState(null);
-  const [school, setSchool] = useState(null);
-  const [status, setStatus] = useState("");
-  const [search, setSearch] = useState("");
-  const [errorMessage, setErrorMessage] = useState("")
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
-  const [showImport, setShowImport] = useState(false);
-
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const [type, setType] = useState('')
+  const [year, setYear] = useState('')
+  const [school, setSchool] = useState('')
+  const [status, setStatus] = useState('')
+  const [search, setSearch] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [showImport, setShowImport] = useState(false)
 
   useEffect(() => {
     try {
       const iin = getUserIIN()
-      console.log('IIN пользователя:', iin)
-  
       localStorage.setItem('iin', iin)
-  
-      const token = localStorage.getItem('accessToken')
 
+      const token = localStorage.getItem('accessToken')
       if (!token) {
-        console.warn("Токен отсутствует, редирект на /login")
         navigate('/login')
         return
-      } else
-      {
-        console.log('token')
       }
 
       const decodedToken = jwtDecode(token)
-      // setIsAdmin(decodedToken.role === 'admin')
-
-      const isAdmin = decodedToken.role === 'admin' ? true : false;
-      console.log("isAdmin:", isAdmin)
-  
-      setIsAdmin(isAdmin)
-
+      setIsAdmin(decodedToken.role === 'admin')
     } catch (error) {
-      console.error('Ошибка при получении IIN:', error.message)
-      setErrorMessage("Вы не авторизованы. Пожалуйста, войдите в систему.")
+      console.error('Could not read auth context:', error)
+      setErrorMessage('Your session could not be verified. Please sign in again.')
       navigate('/login')
     }
   }, [navigate])
+
+  const resetPage = () => setCurrentPage(1)
+
   const fetchPublications = useCallback(async () => {
-    const token = localStorage.getItem('accessToken')
-      if (!token) return
-  
+    try {
+      setErrorMessage('')
       const iin = localStorage.getItem('iin')
-  
-      try {
-        const response = await makeAuthenticatedRequest(
-          `${url}/api/user/getPublications`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-              params: { iin, publicationType: type, school, year, status: status || undefined, query: search || undefined }
-
+      const response = await makeAuthenticatedRequest(
+        `${url}/api/user/getPublications`,
+        {
+          method: 'GET',
+          params: {
+            iin,
+            publicationType: type || undefined,
+            school: school || undefined,
+            year: year || undefined,
+            status: status || undefined,
+            query: search || undefined,
           },
-          navigate
-        )
-        console.log("Ответ от сервера:", response)
+        },
+        navigate
+      )
 
-
-        if (response.status === 200) {  
-          console.log("Публикации успешно загружены!")
-          setPublications(response.data)  // Здесь данные из Axios
-        } else {
-          console.warn("Не удалось загрузить публикации, редирект...")
-          setErrorMessage("Не удалось загрузить публикации.")
-          navigate('/login')
-        }
-      } catch (error) {
-        console.error('Ошибка при загрузке публикаций:', error)
-        setErrorMessage("Произошла ошибка при загрузке публикаций.")
-      } finally {
-        setIsLoading(false)
+      if (response?.status === 200) {
+        setPublications(response.data)
       }
-  }, [navigate, school, type, url, year, status, search])
+    } catch (error) {
+      console.error('Publication loading failed:', error)
+      setErrorMessage('Could not load publications. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [navigate, school, search, status, type, year])
 
   useEffect(() => {
-    if (isAdmin === null) return;
-      fetchPublications()
-  }, [isAdmin, fetchPublications])
+    fetchPublications()
+  }, [fetchPublications])
 
+  useEffect(() => {
+    resetPage()
+  }, [school, search, status, type, year])
 
+  const counts = useMemo(() => {
+    return publications.reduce(
+      (acc, publication) => {
+        const publicationStatus = publication.status || 'draft'
+        acc[publicationStatus] = (acc[publicationStatus] || 0) + 1
+        return acc
+      },
+      { draft: 0, submitted: 0, approved: 0, rejected: 0 }
+    )
+  }, [publications])
+
+  const paginatedPublications = useMemo(
+    () => publications.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage),
+    [currentPage, publications]
+  )
+
+  const totalPages = Math.ceil(publications.length / itemsPerPage)
 
   const handleGenerateUserReport = () => {
     try {
       const iin = getUserIIN()
       generateUserReport(url, navigate, iin)
     } catch (error) {
-      console.error('Ошибка при генерации отчета:', error.message)
-      setErrorMessage("Произошла ошибка при генерации отчета.")
+      console.error('Report generation failed:', error)
+      setErrorMessage('Could not generate the publication report.')
     }
   }
 
-  
+  const handleDeletePublication = async (id) => {
+    if (!window.confirm('Delete this publication? This action cannot be undone.')) {
+      return
+    }
 
-  const handleDeletePublication= async (id) => {
     try {
-      const token = localStorage.getItem('accessToken')
-      if (!token) {
-        alert('Ошибка авторизации. Пожалуйста, войдите снова.')
-        return
-      }
-      
-      const response = await makeAuthenticatedRequest(`${url}/api/admin/publications/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      }, navigate)
-
-      if (response.status!==200) {
-        const errorText = await response.text()
-        throw new Error(`Ошибка при delete: ${errorText}`)
-      }
+      await makeAuthenticatedRequest(
+        `${url}/api/admin/publications/${id}`,
+        { method: 'DELETE' },
+        navigate
+      )
+      setSuccessMessage('Publication deleted.')
       fetchPublications()
-      alert('Публикация успешно DELETED!')
-      navigate('/publications')
     } catch (error) {
-      console.error('Ошибка при delete изменений:', error)
-      alert('Произошла ошибка. Попробуйте позже.')
+      console.error('Delete failed:', error)
+      setErrorMessage('Could not delete the publication.')
     }
   }
 
   const handleSubmitPublication = async (id) => {
     try {
-      const token = localStorage.getItem('accessToken')
-      const response = await makeAuthenticatedRequest(`${url}/api/user/upload/${id}/submit`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` },
-      }, navigate)
+      const response = await makeAuthenticatedRequest(
+        `${url}/api/user/upload/${id}/submit`,
+        { method: 'PATCH' },
+        navigate
+      )
 
-      if (response.status === 200) {
+      if (response?.status === 200) {
+        setSuccessMessage('Publication submitted for review.')
         fetchPublications()
       }
     } catch (error) {
       console.error('Submit failed:', error)
-      setErrorMessage('Не удалось отправить публикацию на проверку.')
+      setErrorMessage('Could not submit the publication for review.')
     }
   }
 
   const handleExport = async (format) => {
     try {
-      const response = await makeAuthenticatedRequest(`${url}/api/user/publications/export`, {
-        method: 'GET',
-        responseType: 'blob',
-        params: { format },
-      }, navigate)
-      const blob = new Blob([response.data], { type: format === 'pdf' ? 'application/pdf' : 'text/csv' })
+      const response = await makeAuthenticatedRequest(
+        `${url}/api/user/publications/export`,
+        {
+          method: 'GET',
+          responseType: 'blob',
+          params: { format },
+        },
+        navigate
+      )
+      const mimeTypes = {
+        csv: 'text/csv',
+        pdf: 'application/pdf',
+        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      }
+      const blob = new Blob([response.data], { type: mimeTypes[format] || mimeTypes.csv })
       const reportUrl = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = reportUrl
@@ -206,205 +207,290 @@ export default function PublicationsPage() {
       a.remove()
     } catch (error) {
       console.error('Export failed:', error)
-      setErrorMessage('Не удалось экспортировать публикации.')
+      setErrorMessage('Could not export publications.')
     }
   }
 
-  const paginatedPublications = publications.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(publications.length / itemsPerPage);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  // Функция сброса страницы на первую
-  const resetPage = () => setCurrentPage(1);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <p className="text-lg font-bold text-gray-700">Загрузка...</p>
-      </div>
-    )
-  }
-
   return (
-    <>
+    <div className="min-h-screen bg-slate-50">
       <Navbar role={isAdmin ? 'admin' : 'user'} />
-      <div className="w-full mx-auto min-h-screen bg-white p-4 md:p-8">
-        <ErrorMessage message={errorMessage} />
 
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-xl md:text-2xl font-bold text-gray-800 text-center md:text-left">
-            Публикации
-          </h1>
-          <div className="flex flex-col sm:flex-row justify-center md:justify-end items-center gap-3">
-            <button
-              onClick={() => setShowImport(!showImport)}
-              className="w-full sm:w-auto py-2 px-4 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-            >
-              {showImport ? 'Скрыть импорт' : 'Импорт из Crossref'}
-            </button>
-            {!isAdmin && (
-              <>
-                <ADD updateData={fetchPublications} />
-                <button
-                  onClick={handleGenerateUserReport}
-                  className="w-full sm:w-auto py-2 px-4 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
-                >
-                  Генерировать отчет
-                </button>
-                <button
-                  onClick={() => handleExport('csv')}
-                  className="w-full sm:w-auto py-2 px-4 text-sm text-white bg-slate-600 hover:bg-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 transition duration-200"
-                >
-                  CSV
-                </button>
-                <button
-                  onClick={() => handleExport('pdf')}
-                  className="w-full sm:w-auto py-2 px-4 text-sm text-white bg-slate-600 hover:bg-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 transition duration-200"
-                >
-                  PDF
-                </button>
-              </>
-            )}
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+                <FileText className="h-4 w-4" />
+                Publication workspace
+              </div>
+              <h1 className="text-3xl font-bold text-slate-950">Publications</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Search, filter, import, export and move records through the review workflow.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowImport((value) => !value)}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+              >
+                <Import className="h-4 w-4" />
+                {showImport ? 'Hide Crossref' : 'Crossref import'}
+              </button>
+              {!isAdmin && <ADD updateData={fetchPublications} />}
+              {!isAdmin && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleGenerateUserReport}
+                    className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    <FileDown className="h-4 w-4" />
+                    Report
+                  </button>
+                  <ExportButton label="CSV" icon={Download} onClick={() => handleExport('csv')} />
+                  <ExportButton label="PDF" icon={FileText} onClick={() => handleExport('pdf')} />
+                  <ExportButton label="Excel" icon={FileSpreadsheet} onClick={() => handleExport('xlsx')} />
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        </section>
 
-        {showImport && (
-          <div className="mb-8">
-            <CrossrefImport onImportSuccess={fetchPublications} />
+        <ErrorMessage message={errorMessage} />
+        {successMessage && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            {successMessage}
           </div>
         )}
 
-        <PublicationComponents setYear={setYear} setSchool={setSchool} setType={setType} school={school} type={type}/>
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <input
-            type="text"
-            value={search}
-            onChange={(event) => { setSearch(event.target.value); resetPage(); }}
-            placeholder="Search title, author, DOI"
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <select
-            value={status}
-            onChange={(event) => { setStatus(event.target.value); resetPage(); }}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All statuses</option>
-            {Object.entries(statusMap).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </div>
+        {showImport && (
+          <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+            <CrossrefImport onImportSuccess={fetchPublications} />
+          </section>
+        )}
 
-        <div className="mt-6">
-          {paginatedPublications.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {paginatedPublications.map((publication, index) => (
-                <div key={index} className="flex flex-col justify-between border border-gray-300 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden min-h-[300px]">
-                  <div className="p-4">
-                    <div className="mb-3 pb-2 border-b border-gray-300">
-                      <span className="inline-block px-2 py-1 text-xs font-medium text-white bg-indigo-500 rounded-full mb-1">
-                        {publicationTypeMap[publication.publicationType]}
-                      </span>
-                      <span className="inline-block ml-2 px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full mb-1">
-                        {statusMap[publication.status] || publication.status || 'Draft'}
-                      </span>
-                      <h3 className="text-base font-semibold line-clamp-2 mb-1 text-gray-800 text-left" title={publication.title}>
-                        {publication.title}
-                      </h3>
-                      <p className="text-xs text-gray-600 text-left">
-                        Год: {publication.year}
-                      </p>
-                    </div>
-                    
-                    <div className="text-xs text-gray-700 text-left">
-                      <p className="mb-2 line-clamp-2 flex" title={`Авторы: ${publication.authors}`}>
-                        <span className="font-medium text-gray-800 min-w-[80px]">Авторы:</span> 
-                        <span>{publication.authors}</span>
-                      </p>
-                      <p className="mb-2 line-clamp-2 flex" title={`Выходные данные: ${publication.output}`}>
-                        <span className="font-medium text-gray-800 min-w-[80px]">Данные:</span> 
-                        <span>{publication.output}</span>
-                      </p>
-                      {publication.doi && (
-                        <p className="mb-2 line-clamp-1 flex" title={`DOI: ${publication.doi}`}>
-                          <span className="font-medium text-gray-800 min-w-[80px]">DOI:</span> 
-                          <span>{publication.doi}</span>
-                        </p>
-                      )}
-                      {publication.isbn && (
-                        <p className="mb-2 line-clamp-1 flex" title={`ISBN: ${publication.isbn}`}>
-                          <span className="font-medium text-gray-800 min-w-[80px]">ISBN:</span> 
-                          <span>{publication.isbn}</span>
-                        </p>
-                      )}
-                      {publication.file && (
-                        <p className="mb-2 flex">
-                          <span className="font-medium text-gray-800 min-w-[80px]">Файл:</span>
-                          <a href={`${url}/${publication.file}`} download className="text-blue-500 hover:text-blue-600 hover:underline flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            Скачать файл
-                          </a>
-                        </p>
-                      )}
-                      <p className="mb-2 line-clamp-1 flex">
-                        <span className="font-medium text-gray-800 min-w-[80px]">Visibility:</span>
-                        <span>{visibilityMap[publication.visibility] || publication.visibility || 'Private'}</span>
-                      </p>
-                      {publication.reviewComment && (
-                        <p className="mb-2 line-clamp-2 flex" title={publication.reviewComment}>
-                          <span className="font-medium text-gray-800 min-w-[80px]">Review:</span>
-                          <span>{publication.reviewComment}</span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between bg-gray-50 p-2 mt-auto border-t border-gray-300">
-                    {publication.status !== 'approved' && (
-                      <EDIT pub={publication} updateData={fetchPublications} resetPage={resetPage}/>
-                    )}
-                    {['draft', 'rejected'].includes(publication.status || 'draft') && (
-                      <button
-                        onClick={() => handleSubmitPublication(publication._id)}
-                        className="py-1 px-2 text-xs text-white bg-emerald-500 rounded-lg hover:bg-emerald-600"
-                      >
-                        Submit
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDeletePublication(publication._id)}
-                      className="py-1 px-2 text-xs text-white bg-rose-500 rounded-lg hover:bg-rose-600"
-                    >
-                      Удалить
-                    </button>
-                  </div>
-                </div>
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-950">
+            <Filter className="h-4 w-4" />
+            Filters
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <div className="relative md:col-span-2 xl:col-span-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Title, author, DOI"
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+            <input
+              type="text"
+              value={year}
+              onChange={(event) => setYear(event.target.value)}
+              placeholder="Year"
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+            <select
+              value={type}
+              onChange={(event) => setType(event.target.value)}
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">All types</option>
+              {Object.entries(publicationTypeMap).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">All statuses</option>
+              {Object.entries(statusMap).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            <select
+              value={school}
+              onChange={(event) => setSchool(event.target.value)}
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">All schools</option>
+              {allHigherSchools.map((schoolItem) => (
+                <option key={schoolItem} value={schoolItem}>{schoolItem}</option>
+              ))}
+            </select>
+          </div>
+        </section>
+
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatusSummary label="All records" value={publications.length} />
+          <StatusSummary label="Submitted" value={counts.submitted} tone="amber" />
+          <StatusSummary label="Approved" value={counts.approved} tone="emerald" />
+          <StatusSummary label="Needs work" value={counts.rejected + counts.draft} tone="rose" />
+        </section>
+
+        <section>
+          {isLoading ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="h-72 animate-pulse rounded-lg border border-slate-200 bg-white" />
+              ))}
+            </div>
+          ) : paginatedPublications.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {paginatedPublications.map((publication) => (
+                <PublicationCard
+                  key={publication._id}
+                  publication={publication}
+                  isAdmin={isAdmin}
+                  onDelete={handleDeletePublication}
+                  onSubmit={handleSubmitPublication}
+                  onRefresh={fetchPublications}
+                  resetPage={resetPage}
+                />
               ))}
             </div>
           ) : (
-            <div className="flex justify-center items-center min-h-[50vh] w-full">
-              <p className="text-gray-600 text-lg">У вас пока нет публикаций.</p>
+            <div className="flex min-h-96 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-6 text-center">
+              <FileText className="mb-4 h-10 w-10 text-slate-400" />
+              <h2 className="text-lg font-bold text-slate-950">No publications found</h2>
+              <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+                Adjust filters or add your first publication record to begin the review workflow.
+              </p>
             </div>
           )}
-        </div>
+        </section>
 
         {publications.length > itemsPerPage && (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={handlePageChange}
+            onPageChange={setCurrentPage}
           />
         )}
+      </main>
+    </div>
+  )
+}
+
+function PublicationCard({ publication, isAdmin, onDelete, onSubmit, onRefresh, resetPage }) {
+  const status = publication.status || 'draft'
+  const canEdit = !isAdmin && status !== 'approved'
+  const canSubmit = !isAdmin && ['draft', 'rejected'].includes(status)
+
+  return (
+    <article className="flex min-h-80 flex-col rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex flex-1 flex-col p-5">
+        <div className="mb-3 flex flex-wrap gap-2">
+          <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyles[status] || statusStyles.draft}`}>
+            {statusMap[status] || status}
+          </span>
+          <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+            {publicationTypeMap[publication.publicationType] || 'Publication'}
+          </span>
+        </div>
+
+        <h2 className="line-clamp-3 text-base font-bold leading-6 text-slate-950" title={publication.title}>
+          {publication.title}
+        </h2>
+
+        <div className="mt-4 space-y-2 text-sm text-slate-600">
+          <InfoRow label="Authors" value={publication.authors} />
+          <InfoRow label="Year" value={publication.year} />
+          <InfoRow label="Output" value={publication.output} clamp />
+          {publication.doi && <InfoRow label="DOI" value={publication.doi} />}
+          {publication.isbn && <InfoRow label="ISBN" value={publication.isbn} />}
+          <InfoRow label="Visibility" value={visibilityMap[publication.visibility] || publication.visibility || 'Private'} />
+        </div>
+
+        {publication.reviewComment && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <p className="font-bold">Review comment</p>
+            <p className="mt-1 line-clamp-3 leading-6">{publication.reviewComment}</p>
+          </div>
+        )}
       </div>
-    </>
+
+      <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-slate-50 p-3">
+        {canEdit && <EDIT pub={publication} updateData={onRefresh} resetPage={resetPage} />}
+        {canSubmit && (
+          <button
+            type="button"
+            onClick={() => onSubmit(publication._id)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
+          >
+            <Send className="h-3.5 w-3.5" />
+            Submit
+          </button>
+        )}
+        {publication.file && (
+          <a
+            href={`${url}/${publication.file}`}
+            download
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            File
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={() => onDelete(publication._id)}
+          className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Delete
+        </button>
+      </div>
+    </article>
+  )
+}
+
+function InfoRow({ label, value, clamp = false }) {
+  if (!value) return null
+
+  return (
+    <p className="grid grid-cols-[72px_1fr] gap-2">
+      <span className="font-semibold text-slate-800">{label}</span>
+      <span className={clamp ? 'line-clamp-2' : 'truncate'} title={String(value)}>
+        {value}
+      </span>
+    </p>
+  )
+}
+
+function StatusSummary({ label, value, tone = 'blue' }) {
+  const tones = {
+    blue: 'bg-blue-50 text-blue-700',
+    amber: 'bg-amber-50 text-amber-700',
+    emerald: 'bg-emerald-50 text-emerald-700',
+    rose: 'bg-rose-50 text-rose-700',
+  }
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="text-sm font-medium text-slate-500">{label}</p>
+      <p className={`mt-2 inline-flex rounded-lg px-3 py-1 text-2xl font-bold ${tones[tone]}`}>
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function ExportButton({ label, icon, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+    >
+      {createElement(icon, { className: 'h-4 w-4' })}
+      {label}
+    </button>
   )
 }

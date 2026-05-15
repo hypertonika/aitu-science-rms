@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { publicationTypeMap } from "../../pages/PublicationPage/PublicationsPage";
-import { allHigherSchools } from "../../pages/AdminPublications";
+import { allHigherSchools, publicationTypeMap } from "../../constants/publications";
 import {
   Listbox,
   ListboxButton,
@@ -17,12 +16,11 @@ export default function PublicationComponents({
   setSchool,
 }) {
   const [preyear, setPreyear] = useState("");
-  const [prename, setPrename] = useState("");
 
   const handleSearch = () => {
     setYear(preyear);
     if (setName) {
-      setName(prename);
+      setName("");
     }
   };
 
