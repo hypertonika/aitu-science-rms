@@ -126,7 +126,7 @@ export default function UserProfile() {
               </div>
               <div className="mt-5 text-center">
                 <p className="text-xl font-bold">{user.fullName || 'Unnamed researcher'}</p>
-                <p className="mt-1 text-sm text-slate-300">IIN {user.iin}</p>
+                <p className="mt-1 text-sm text-slate-300">{user.email || user.iin}</p>
                 <span className="mt-4 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-cyan-100">
                   {user.role === 'admin' ? 'Admin' : 'Researcher'}
                 </span>

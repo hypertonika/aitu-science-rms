@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { makeAuthenticatedRequest } from '../../services/api'
 import { generateUserReport } from '../../services/reportUtils'
-import { getUserIIN } from '../../services/userUtils'
+import { getUserIdentifier } from '../../services/userUtils'
 import Navbar from '../../components/Navbar'
 import ErrorMessage from '../../components/ErrorMessage'
 import ADD from './BREAD/ADD'
@@ -56,7 +56,7 @@ export default function PublicationsPage() {
 
   useEffect(() => {
     try {
-      const iin = getUserIIN()
+      const iin = getUserIdentifier()
       localStorage.setItem('iin', iin)
 
       const token = localStorage.getItem('accessToken')
@@ -135,7 +135,7 @@ export default function PublicationsPage() {
 
   const handleGenerateUserReport = () => {
     try {
-      const iin = getUserIIN()
+      const iin = getUserIdentifier()
       generateUserReport(url, navigate, iin)
     } catch (error) {
       console.error('Report generation failed:', error)

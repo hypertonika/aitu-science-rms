@@ -92,7 +92,7 @@ export default function AdminPage() {
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by IIN, name or email"
+                placeholder="Search by email or name"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -122,7 +122,7 @@ export default function AdminPage() {
               <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-50">
                   <tr>
-                    <TableHead>IIN</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
@@ -132,7 +132,7 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {filteredUsers.map((user) => (
                     <tr key={user.iin} className="transition hover:bg-slate-50">
-                      <TableCell>{user.iin}</TableCell>
+                      <TableCell>{user.email || user.iin}</TableCell>
                       <TableCell>{user.fullName || 'Not specified'}</TableCell>
                       <TableCell>{user.email || 'Not specified'}</TableCell>
                       <TableCell>

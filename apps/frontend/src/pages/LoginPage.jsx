@@ -2,6 +2,8 @@ import { LogIn, Mail } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode'
+import LanguageToggle from '../components/LanguageToggle'
+import { useLanguage } from '../i18n'
 
 const LoginPage = () => {
   const navigate = useNavigate()
@@ -9,6 +11,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { t } = useLanguage()
 
   const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -61,8 +64,11 @@ const LoginPage = () => {
                 <p className="text-sm font-semibold text-slate-950">AITU Science RMS</p>
                 <p className="text-sm text-slate-500">Research workspace</p>
               </div>
+              <div className="ml-auto">
+                <LanguageToggle />
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-slate-950">Sign in</h1>
+            <h1 className="text-2xl font-bold text-slate-950">{t('signIn')}</h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
               Use your university email to access publications, reports and review workflows.
             </p>
@@ -70,7 +76,7 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-slate-700">Email</label>
+              <label className="block text-sm font-semibold text-slate-700">{t('email')}</label>
               <div className="relative mt-2">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -89,7 +95,7 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700">Password</label>
+              <label className="block text-sm font-semibold text-slate-700">{t('password')}</label>
               <input
                 type="password"
                 value={password}
@@ -113,14 +119,14 @@ const LoginPage = () => {
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <LogIn className="h-4 w-4" />
-              {isSubmitting ? 'Signing in...' : 'Sign in'}
+              {isSubmitting ? 'Signing in...' : t('signIn')}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">
-            New researcher?{' '}
+            {t('newResearcher')}{' '}
             <Link to="/register" className="font-semibold text-blue-700 hover:text-blue-800">
-              Create an account
+              {t('createAccount')}
             </Link>
           </p>
         </section>

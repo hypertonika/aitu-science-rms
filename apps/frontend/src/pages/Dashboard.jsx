@@ -15,6 +15,7 @@ import {
 import { makeAuthenticatedRequest } from '../services/api'
 import Navbar from '../components/Navbar'
 import { allHigherSchools, visibilityMap } from '../constants/publications'
+import { useLanguage } from '../i18n'
 
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -40,7 +41,10 @@ export default function Dashboard() {
   const [isEditing, setIsEditing] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [message, setMessage] = useState('')
+  const [passwordMessage, setPasswordMessage] = useState('')
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [userData, setUserData] = useState(initialUserData)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken')
@@ -140,6 +144,44 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Profile update failed:', error)
       setMessage(error.response?.data?.message || 'Could not save profile changes.')
+    }
+  }
+
+  const handlePasswordChange = async (event) => {
+    event.preventDefault()
+    setPasswordMessage('')
+
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordMessage('New password must contain at least 8 characters.')
+      return
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordMessage('New passwords do not match.')
+      return
+    }
+
+    try {
+      const response = await makeAuthenticatedRequest(
+        `${url}/api/user/changePassword`,
+        {
+          method: 'PUT',
+          data: {
+            currentPassword: passwordForm.currentPassword,
+            newPassword: passwordForm.newPassword,
+          },
+        },
+        navigate
+      )
+
+      if (response?.status === 200) {
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+        localStorage.removeItem('refreshToken')
+        setPasswordMessage('Password changed. Please sign in again after your next logout.')
+      }
+    } catch (error) {
+      console.error('Password change failed:', error)
+      setPasswordMessage(error.response?.data?.message || 'Could not change password.')
     }
   }
 
@@ -260,7 +302,59 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        {!isAdmin && (
+          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-5">
+              <h2 className="text-xl font-bold text-slate-950">{t('changePassword')}</h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Use a strong password. After changing it, old refresh sessions are invalidated.
+              </p>
+            </div>
+
+            <form onSubmit={handlePasswordChange} className="grid gap-4 md:grid-cols-3">
+              <PasswordInput
+                label={t('currentPassword')}
+                value={passwordForm.currentPassword}
+                onChange={(value) => setPasswordForm((current) => ({ ...current, currentPassword: value }))}
+              />
+              <PasswordInput
+                label={t('newPassword')}
+                value={passwordForm.newPassword}
+                onChange={(value) => setPasswordForm((current) => ({ ...current, newPassword: value }))}
+              />
+              <PasswordInput
+                label={t('confirmPassword')}
+                value={passwordForm.confirmPassword}
+                onChange={(value) => setPasswordForm((current) => ({ ...current, confirmPassword: value }))}
+              />
+              <div className="md:col-span-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="submit"
+                  className="inline-flex h-10 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  {t('savePassword')}
+                </button>
+                {passwordMessage && <p className="text-sm font-medium text-slate-600">{passwordMessage}</p>}
+              </div>
+            </form>
+          </section>
+        )}
       </main>
+    </div>
+  )
+}
+
+function PasswordInput({ label, value, onChange }) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-slate-700">{label}</label>
+      <input
+        type="password"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      />
     </div>
   )
 }

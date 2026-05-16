@@ -20,8 +20,12 @@ import { makeAuthenticatedRequest } from '../services/api'
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 const schoolShortNames = new Map([
-  ['Р’С‹СЃС€Р°СЏ С€РєРѕР»Р° РёРЅС„РѕСЂРјР°С†РёРѕРЅРЅС‹С… С‚РµС…РЅРѕР»РѕРіРёР№ Рё РёРЅР¶РµРЅРµСЂРёРё', 'SITE'],
-  ['РЁРєРѕР»Р° РїСЂР°РІР°', 'Law'],
+  ['Школа интеллектуальных систем', 'SIS'],
+  ['Школа искусственного интеллекта и науки о данных', 'AI & DS'],
+  ['Школа программной инженерии', 'SE'],
+  ['Школа кибербезопасности', 'Cybersecurity'],
+  ['Школа креативных индустрий', 'Creative'],
+  ['Школа цифрового государственного управления', 'Digital Gov'],
 ])
 
 const reviewSteps = [

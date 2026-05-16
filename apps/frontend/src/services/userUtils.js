@@ -1,22 +1,16 @@
 import { jwtDecode } from 'jwt-decode'
 
-export function getUserIIN() {
+export function getUserIdentifier() {
   try {
     const token = localStorage.getItem('accessToken')
     if (!token) {
-      console.error('Токен отсутствует. Пожалуйста, авторизуйтесь.')
       return null
     }
 
     const decodedToken = jwtDecode(token)
-    if (!decodedToken.iin) {
-      console.error('IIN не найден в токене.')
-      return null
-    }
-
-    return decodedToken.iin
+    return decodedToken.iin || decodedToken.email || null
   } catch (error) {
-    console.error('Ошибка получения IIN:', error.message)
+    console.error('Could not read user identifier:', error.message)
     return null
   }
 }

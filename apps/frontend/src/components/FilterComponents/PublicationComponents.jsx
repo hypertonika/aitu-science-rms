@@ -101,7 +101,7 @@ export default function PublicationComponents({
           <div className="relative">
             <ListboxButton className="w-full border border-gray-300 bg-white text-gray-800 text-left px-4 py-2 cursor-pointer rounded-lg hover:border-gray-400 transition-colors duration-200 flex items-center justify-between">
               <span className="block overflow-hidden whitespace-nowrap text-ellipsis">
-                {school ? school : "Высшая школа: Все"}
+                {school ? school : "School: All"}
               </span>
                <span className="pointer-events-none flex items-center">
                  <svg className="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

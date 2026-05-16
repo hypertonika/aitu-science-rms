@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const CROSSREF_API_BASE = 'https://api.crossref.org';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const EMAIL = 'your-email@aiu.edu.kz'; // Рекомендуется указать email для лучшего обслуживания
+const EMAIL = 'research@example.edu';
 
 class CrossrefService {
   constructor() {

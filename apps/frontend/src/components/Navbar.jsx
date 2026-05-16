@@ -2,21 +2,24 @@ import { BookOpen, LayoutDashboard, LogOut, Menu, User, Users, X } from 'lucide-
 import { NavLink, useNavigate } from 'react-router-dom'
 import { createElement } from 'react'
 import { useState } from 'react'
+import LanguageToggle from './LanguageToggle'
+import { useLanguage } from '../i18n'
 
 const navByRole = {
   admin: [
-    { to: '/home-admin', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/admin-publications', label: 'Publications', icon: BookOpen },
-    { to: '/admin-users', label: 'Researchers', icon: Users },
+    { to: '/home-admin', labelKey: 'dashboard', icon: LayoutDashboard },
+    { to: '/admin-publications', labelKey: 'publications', icon: BookOpen },
+    { to: '/admin-users', labelKey: 'researchers', icon: Users },
   ],
   user: [
-    { to: '/home-user', label: 'Home', icon: LayoutDashboard },
-    { to: '/publications', label: 'Publications', icon: BookOpen },
+    { to: '/home-user', labelKey: 'home', icon: LayoutDashboard },
+    { to: '/publications', labelKey: 'publications', icon: BookOpen },
   ],
 }
 
 const Navbar = ({ role = 'user' }) => {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const navItems = navByRole[role] || navByRole.user
 
@@ -40,30 +43,31 @@ const Navbar = ({ role = 'user' }) => {
           <img src="/logo.png" alt="AITU" className="h-9 w-9 object-contain" />
           <div className="leading-tight">
             <p className="text-sm font-bold text-slate-950">AITU Science RMS</p>
-            <p className="text-xs text-slate-500">{role === 'admin' ? 'Admin workspace' : 'Researcher workspace'}</p>
+            <p className="text-xs text-slate-500">{role === 'admin' ? t('adminWorkspace') : t('researcherWorkspace')}</p>
           </div>
         </NavLink>
 
         <nav className="hidden items-center gap-1 md:flex">
-          {navItems.map(({ to, label, icon }) => (
+          {navItems.map(({ to, labelKey, icon }) => (
             <NavLink key={to} to={to} className={linkClass}>
               {createElement(icon, { className: 'h-4 w-4' })}
-              {label}
+              {t(labelKey)}
             </NavLink>
           ))}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <LanguageToggle />
           <NavLink to="/dashboard" className={linkClass}>
             <User className="h-4 w-4" />
-            Profile
+            {t('profile')}
           </NavLink>
           <button
             onClick={handleLogout}
             className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
           >
             <LogOut className="h-4 w-4" />
-            Sign out
+            {t('signOut')}
           </button>
         </div>
 
@@ -79,7 +83,7 @@ const Navbar = ({ role = 'user' }) => {
       {isMobileMenuOpen && (
         <div className="border-t border-slate-200 bg-white px-4 py-3 md:hidden">
           <div className="grid gap-1">
-            {[...navItems, { to: '/dashboard', label: 'Profile', icon: User }].map(({ to, label, icon }) => (
+            {[...navItems, { to: '/dashboard', labelKey: 'profile', icon: User }].map(({ to, labelKey, icon }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -87,7 +91,7 @@ const Navbar = ({ role = 'user' }) => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {createElement(icon, { className: 'h-4 w-4' })}
-                {label}
+                {t(labelKey)}
               </NavLink>
             ))}
             <button
@@ -95,8 +99,9 @@ const Navbar = ({ role = 'user' }) => {
               className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700"
             >
               <LogOut className="h-4 w-4" />
-              Sign out
+              {t('signOut')}
             </button>
+            <LanguageToggle />
           </div>
         </div>
       )}

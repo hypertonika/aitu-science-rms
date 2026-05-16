@@ -1,6 +1,8 @@
 import { Mail, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import LanguageToggle from '../components/LanguageToggle'
+import { useLanguage } from '../i18n'
 
 const RegisterPage = () => {
   const [fullName, setFullName] = useState('')
@@ -10,6 +12,7 @@ const RegisterPage = () => {
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
   const handleSubmit = async (event) => {
@@ -73,8 +76,11 @@ const RegisterPage = () => {
                 <p className="text-sm font-semibold text-slate-950">AITU Science RMS</p>
                 <p className="text-sm text-slate-500">Researcher access</p>
               </div>
+              <div className="ml-auto">
+                <LanguageToggle />
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-slate-950">Create account</h1>
+            <h1 className="text-2xl font-bold text-slate-950">{t('createAccount')}</h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
               Register with your university email. Profile details can be completed after sign-in.
             </p>
@@ -82,7 +88,7 @@ const RegisterPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-slate-700">Full name</label>
+              <label className="block text-sm font-semibold text-slate-700">{t('fullName')}</label>
               <input
                 type="text"
                 value={fullName}
@@ -95,7 +101,7 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700">Email</label>
+              <label className="block text-sm font-semibold text-slate-700">{t('email')}</label>
               <div className="relative mt-2">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -111,7 +117,7 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700">Password</label>
+              <label className="block text-sm font-semibold text-slate-700">{t('password')}</label>
               <input
                 type="password"
                 value={password}
@@ -124,7 +130,7 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700">Confirm password</label>
+              <label className="block text-sm font-semibold text-slate-700">{t('confirmPassword')}</label>
               <input
                 type="password"
                 value={confirmPassword}
@@ -148,14 +154,14 @@ const RegisterPage = () => {
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <UserPlus className="h-4 w-4" />
-              {isSubmitting ? 'Creating account...' : 'Create account'}
+              {isSubmitting ? 'Creating account...' : t('createAccount')}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">
-            Already registered?{' '}
+            {t('alreadyRegistered')}{' '}
             <Link to="/login" className="font-semibold text-blue-700 hover:text-blue-800">
-              Sign in
+              {t('signIn')}
             </Link>
           </p>
         </section>

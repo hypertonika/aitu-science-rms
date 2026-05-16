@@ -166,7 +166,7 @@ export default function EDIT({ pub, updateData, resetPage }) {
       >
         Edit
       </button>
-      <CustomDialog isOpen={isOpen} title={"Редактировать публикацию"} onClose={onClose}>
+      <CustomDialog isOpen={isOpen} title="Edit publication" onClose={onClose}>
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col w-full"

@@ -15,11 +15,13 @@ import './global.css'
 import './App.css'
 import PublicationsPage from './pages/PublicationPage/PublicationsPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import { LanguageProvider } from './i18n'
 
 function App() {
   return (
-    <Router>
-      <RootLayout>
+    <LanguageProvider>
+      <Router>
+        <RootLayout>
         {/* <Navbar /> */}
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -35,8 +37,9 @@ function App() {
           <Route path="/admin/user/:iin" element={<ProtectedRoute roles={['admin']}><UserProfile /></ProtectedRoute>} />
         </Routes>
         <ErrorMessage message={""} />
-      </RootLayout>
-    </Router>
+        </RootLayout>
+      </Router>
+    </LanguageProvider>
   )
 }
 
