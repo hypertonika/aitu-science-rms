@@ -6,7 +6,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { email, fullName, password, role = 'user' } = req.body;
+  const { email, fullName, password } = req.body;
   const normalizedEmail = String(email || '').trim().toLowerCase();
 
   if (!fullName || !normalizedEmail || !password) {
@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
       email: normalizedEmail,
       fullName,
       password: hashedPassword,
-      role,
+      role: 'user',
     });
 
     await newUser.save();

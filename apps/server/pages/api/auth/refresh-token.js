@@ -21,13 +21,13 @@ module.exports = async function handler(req, res) {
     }
 
     const accessToken = jwt.sign(
-      { iin: user.iin, role: user.role, id: user._id },
+      { iin: user.iin, email: user.email, role: user.role, id: user._id },
       process.env.JWT_SECRET || "defaultSecretKey",
       { expiresIn: "1h" }
     );
 
     const nextRefreshToken = jwt.sign(
-      { iin: user.iin },
+      { iin: user.iin, email: user.email },
       refreshSecret,
       { expiresIn: "7d" }
     );

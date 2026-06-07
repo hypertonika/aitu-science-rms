@@ -20,7 +20,7 @@ module.exports = async function handler(req, res) {
   
       // console.log('Токен успешно верифицирован. ИИН:', iin);
   
-      const user = await User.findOne({ iin }).select('-password');
+      const user = await User.findOne({ iin }).select('-password -refreshToken -passwordResetTokenHash -passwordResetExpires');
       if (!user) {
         console.error('Пользователь не найден');
         return res.status(404).json({ message: 'Пользователь не найден' });

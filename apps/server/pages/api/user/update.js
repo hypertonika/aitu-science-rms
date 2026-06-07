@@ -40,7 +40,8 @@ module.exports = async function handler(req, res) {
 
     await user.save();
 
-    const updatedUser = await User.findOne({ iin: req.user.iin }).select('-password -refreshToken');
+    const updatedUser = await User.findOne({ iin: req.user.iin })
+      .select('-password -refreshToken -passwordResetTokenHash -passwordResetExpires');
     return res.status(200).json({ message: 'Profile updated', user: updatedUser });
   } catch (error) {
     console.error('User profile update failed:', error);

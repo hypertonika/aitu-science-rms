@@ -1,57 +1,30 @@
-const jwt = require('jsonwebtoken');
 const { User } = require('../../../models');
+const { verifyToken } = require('../../../middleware/auth');
 
 module.exports = async function handler(req, res) {
-  // await corsMiddleware(req, res);
-  // await dbConnect();
-  
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Отсутствует токен авторизации' });
+    await new Promise((resolve, reject) =>
+      verifyToken(req, res, (err) => (err ? reject(err) : resolve()))
+    );
+
+    const requestingUser = await User.findById(req.user.id);
+    if (!requestingUser || requestingUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
     }
 
-    const token = authHeader.split(' ')[1];
-    const secretKey = process.env.JWT_SECRET || 'defaultSecretKey';
-    const decoded = jwt.verify(token, secretKey);
+    const users = await User.find({})
+      .select('-password -refreshToken -passwordResetTokenHash -passwordResetExpires')
+      .sort({ role: 1, fullName: 1, email: 1 });
 
-    const requestingUser = await User.findOne({ iin: decoded.iin });
-    if (requestingUser.role !== 'admin') {
-      return res.status(403).json({ message: 'Доступ запрещен' });
-    }
-
-    const users = await User.find({});
-    res.status(200).json({ success: true, users });
+    return res.status(200).json({ success: true, users });
   } catch (error) {
-    console.error('Ошибка при получении пользователей:', error);
-    res.status(500).json({ message: 'Произошла ошибка на сервере. Попробуйте позже.' });
+    console.error('Users loading failed:', error);
+    if (!res.headersSent) {
+      return res.status(500).json({ message: 'Server error' });
+    }
   }
-}
-
-// app.get('/api/admin/users', async (req, res) => {
-//     try {
-//       const authHeader = req.headers.authorization;
-//       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-//         return res.status(401).json({ message: 'Отсутствует токен авторизации' });
-//       }
-  
-//       const token = authHeader.split(' ')[1];
-//       const secretKey = process.env.JWT_SECRET || 'defaultSecretKey';
-//       const decoded = jwt.verify(token, secretKey);
-  
-//       const requestingUser = await User.findOne({ iin: decoded.iin });
-//       if (requestingUser.role !== 'admin') {
-//         return res.status(403).json({ message: 'Доступ запрещен' });
-//       }
-  
-//       const users = await User.find({});
-//       res.status(200).json({ success: true, users });
-//     } catch (error) {
-//       console.error('Ошибка при получении пользователей:', error);
-//       res.status(500).json({ message: 'Произошла ошибка на сервере. Попробуйте позже.' });
-//     }
-//   });
+};

@@ -21,10 +21,11 @@ export const visibilityMap = {
 }
 
 export const allHigherSchools = [
-  'Школа интеллектуальных систем',
-  'Школа искусственного интеллекта и науки о данных',
-  'Школа программной инженерии',
-  'Школа кибербезопасности',
-  'Школа креативных индустрий',
-  'Школа цифрового государственного управления',
+  'School of Intelligent Systems',
+  'School of Artificial Intelligence and Data Science',
+  'School of Software Engineering',
+  'School of Cybersecurity',
+  'School of Creative Industries',
+  'School of Digital Public Administration',
+  'School of General Educational Disciplines',
 ]

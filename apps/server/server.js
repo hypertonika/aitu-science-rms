@@ -11,6 +11,8 @@ const { addNormalizedPublicationFields } = require("./services/publicationUtils"
 const authLogin = require("./pages/api/auth/login");
 const authRegister = require("./pages/api/auth/register");
 const authRefreshToken = require("./pages/api/auth/refresh-token");
+const authForgotPassword = require("./pages/api/auth/forgot-password");
+const authResetPassword = require("./pages/api/auth/reset-password");
 
 // admin
 const adminCreate = require("./pages/api/admin/create");
@@ -19,6 +21,7 @@ const adminGenerateUserReport = require("./pages/api/admin/generateUserReport");
 const adminPublications = require("./pages/api/admin/publications");
 const adminUser = require("./pages/api/admin/user");
 const adminUsers = require("./pages/api/admin/users");
+const adminUpdateUserRole = require("./pages/api/admin/updateUserRole");
 const adminCalculateStatistics = require("./pages/api/admin/statistics");
 
 // user
@@ -66,6 +69,8 @@ app.use(cors(corsOptions));
 app.use("/api/auth/login", authLogin);
 app.use("/api/auth/register", authRegister);
 app.use("/api/auth/refresh-token", authRefreshToken);
+app.use("/api/auth/forgot-password", authForgotPassword);
+app.use("/api/auth/reset-password", authResetPassword);
 
 app.use("/api/integrations/crossref", crossrefIntegration);
 
@@ -81,6 +86,7 @@ app.use(
 app.use("/api/admin/generateUserReport", adminGenerateUserReport);
 app.use("/api/admin/publications", adminPublications);
 app.use("/api/admin/user/:iin", adminUser);
+app.use("/api/admin/users/:id/role", adminUpdateUserRole);
 app.use("/api/admin/users", adminUsers);
 app.use("/api/admin/statistics", adminCalculateStatistics);
 

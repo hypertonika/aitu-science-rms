@@ -13,6 +13,7 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedRole, setSelectedRole] = useState('all')
   const [message, setMessage] = useState('')
+  const [updatingRoleUserId, setUpdatingRoleUserId] = useState('')
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -53,6 +54,35 @@ export default function AdminPage() {
 
   const adminCount = users.filter((user) => user.role === 'admin').length
   const researcherCount = users.length - adminCount
+
+  const handleRoleChange = async (user, nextRole) => {
+    if (user.role === nextRole) return
+
+    setUpdatingRoleUserId(user._id)
+    setMessage('')
+
+    try {
+      const response = await makeAuthenticatedRequest(
+        `${url}/api/admin/users/${user._id}/role`,
+        { method: 'PATCH', data: { role: nextRole } },
+        navigate
+      )
+
+      if (response?.data?.success) {
+        setUsers((currentUsers) =>
+          currentUsers.map((currentUser) =>
+            currentUser._id === user._id ? response.data.user : currentUser
+          )
+        )
+        setMessage(`${user.fullName || user.email || user.iin} is now ${nextRole === 'admin' ? 'an admin' : 'a researcher'}.`)
+      }
+    } catch (error) {
+      console.error('Role update failed:', error)
+      setMessage(error.response?.data?.message || 'Could not update user role.')
+    } finally {
+      setUpdatingRoleUserId('')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -122,7 +152,7 @@ export default function AdminPage() {
               <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-50">
                   <tr>
-                    <TableHead>Email</TableHead>
+                    <TableHead>Account</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
@@ -131,18 +161,24 @@ export default function AdminPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {filteredUsers.map((user) => (
-                    <tr key={user.iin} className="transition hover:bg-slate-50">
+                    <tr key={user._id} className="transition hover:bg-slate-50">
                       <TableCell>{user.email || user.iin}</TableCell>
                       <TableCell>{user.fullName || 'Not specified'}</TableCell>
                       <TableCell>{user.email || 'Not specified'}</TableCell>
                       <TableCell>
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                          user.role === 'admin'
-                            ? 'bg-amber-50 text-amber-700'
-                            : 'bg-emerald-50 text-emerald-700'
-                        }`}>
-                          {user.role === 'admin' ? 'Admin' : 'Researcher'}
-                        </span>
+                        <select
+                          value={user.role}
+                          disabled={updatingRoleUserId === user._id}
+                          onChange={(event) => handleRoleChange(user, event.target.value)}
+                          className={`h-9 rounded-lg border px-2.5 text-xs font-bold outline-none transition focus:ring-2 focus:ring-blue-100 ${
+                            user.role === 'admin'
+                              ? 'border-amber-200 bg-amber-50 text-amber-700'
+                              : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          }`}
+                        >
+                          <option value="user">Researcher</option>
+                          <option value="admin">Admin</option>
+                        </select>
                       </TableCell>
                       <TableCell>
                         <Link

@@ -10,6 +10,7 @@ The project is organized as a Node.js monorepo:
 ## Implemented Scope
 
 - JWT authentication with access and refresh token rotation.
+- SMTP password reset flow with expiring reset links.
 - User and admin roles with protected frontend routes and backend role checks.
 - Email-based researcher accounts and profile management: contacts, school, visibility, ORCID, Scopus and Web of Science identifiers.
 - Publication CRUD with draft, submitted, approved and rejected statuses.
@@ -59,10 +60,18 @@ JWT_SECRET=change-me
 JWT_REFRESH_SECRET=change-me-too
 LOCAL_ORIGIN=http://localhost:5173
 PRODUCTION_ORIGIN=
+FRONTEND_URL=http://localhost:5173
 CROSSREF_MAILTO=research@example.edu
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=research@example.edu
+SMTP_PASS=change-me
+SMTP_FROM="AITU Science RMS <research@example.edu>"
 ```
 
 For real use, replace both JWT secrets with long random values.
+Configure SMTP with a mailbox or provider app password before using password reset in production.
 
 ## Install
 
@@ -121,6 +130,26 @@ Runtime files are intentionally ignored by git:
 
 Keep real `.env` files local. Only `.env.example` files should be committed.
 
+## Import DU Data
+
+DU teacher exports can be imported into the existing `User` and `Publication` collections.
+Teachers are matched by `duTeacherId`, email and legacy `iin`; articles are matched by `duArticleId`.
+Imported teacher accounts receive a random unknown password, so users should sign in through password reset.
+
+Dry run on Windows PowerShell:
+
+```powershell
+$env:DU_IMPORT_DRY_RUN='true'
+npm --workspace apps/server run import:du -- "C:\Users\tbaiz\Downloads\aitu-science-rms.du_teachers.json" "C:\Users\tbaiz\Downloads\aitu-science-rms.du_teacher_articles.json" "C:\Users\tbaiz\Downloads\aitu-science-rms.du_research_profiles.json"
+Remove-Item Env:\DU_IMPORT_DRY_RUN
+```
+
+Real import:
+
+```powershell
+npm --workspace apps/server run import:du -- "C:\Users\tbaiz\Downloads\aitu-science-rms.du_teachers.json" "C:\Users\tbaiz\Downloads\aitu-science-rms.du_teacher_articles.json" "C:\Users\tbaiz\Downloads\aitu-science-rms.du_research_profiles.json"
+```
+
 ## Main Workflows
 
 Researcher:
@@ -139,6 +168,14 @@ Admin:
 4. Monitor dashboards and user profiles.
 5. Export approved publications and reports.
 
+To bootstrap the first admin, register a normal user and then run:
+
+```bash
+npm run set-role --workspace apps/server -- user@example.edu admin
+```
+
+After that, admins can change user roles from the `Users` page.
+
 ## Useful Commands
 
 ```bash
@@ -148,4 +185,5 @@ npm run start:server
 npm run check:server
 npm run lint:frontend
 npm run backfill:mvp --workspace apps/server
+npm run set-role --workspace apps/server -- user@example.edu admin
 ```

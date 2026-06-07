@@ -6,6 +6,8 @@
     "start": "node server.js",
     "check": "node --check server.js",
     "backfill:mvp": "node scripts/backfillPublicationMvpFields.js",
+    "import:du": "node scripts/importDuData.js",
+    "set-role": "node scripts/setUserRole.js",
     "deploy": "vercel --prod"
   },
   "description": "Express API for the AITU Science RMS",
@@ -21,6 +23,7 @@
     "mongoose": "^8.7.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^8.0.10",
     "pdfkit": "^0.15.0"
   }
 }

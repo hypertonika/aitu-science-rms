@@ -20,6 +20,13 @@ import { makeAuthenticatedRequest } from '../services/api'
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 const schoolShortNames = new Map([
+  ['School of Intelligent Systems', 'SIS'],
+  ['School of Artificial Intelligence and Data Science', 'AI & DS'],
+  ['School of Software Engineering', 'SE'],
+  ['School of Cybersecurity', 'Cybersecurity'],
+  ['School of Creative Industries', 'Creative'],
+  ['School of Digital Public Administration', 'Digital Gov'],
+  ['School of General Educational Disciplines', 'General Ed'],
   ['Школа интеллектуальных систем', 'SIS'],
   ['Школа искусственного интеллекта и науки о данных', 'AI & DS'],
   ['Школа программной инженерии', 'SE'],

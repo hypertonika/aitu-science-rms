@@ -42,9 +42,32 @@ const publicationSchema = new mongoose.Schema(
       default: "",
       index: true,
     },
+    duArticleId: {
+      type: String,
+      index: true,
+      unique: true,
+      sparse: true,
+    },
+    duTeacherId: {
+      type: String,
+      index: true,
+    },
+    externalUrl: {
+      type: String,
+      default: "",
+    },
+    publicationDate: {
+      type: Date,
+    },
+    importedFrom: {
+      type: String,
+    },
+    importedAt: {
+      type: Date,
+    },
     source: {
       type: String,
-      enum: ["manual", "crossref"],
+      enum: ["manual", "crossref", "du"],
       default: "manual",
     },
     journal: {

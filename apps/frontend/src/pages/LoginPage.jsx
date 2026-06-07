@@ -105,6 +105,11 @@ const LoginPage = () => {
                 className="mt-2 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 placeholder="Enter password"
               />
+              <div className="mt-2 text-right">
+                <Link to="/forgot-password" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             {error && (

@@ -15,7 +15,9 @@ module.exports = async function handler(req, res) {
       authenticateAdmin(req, res, (err) => (err ? reject(err) : resolve()))
     );
 
-    const user = await User.findOne({ iin: req.params.iin }).select('-password -refreshToken').lean();
+    const user = await User.findOne({ iin: req.params.iin })
+      .select('-password -refreshToken -passwordResetTokenHash -passwordResetExpires')
+      .lean();
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
