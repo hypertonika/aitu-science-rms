@@ -66,14 +66,15 @@ router.get("/publications/export", verifyToken, authenticateUser, async (req, re
       ...buildPublicationFilters(req.query),
     };
     const publications = await Publication.find(filter).sort({ year: -1, title: 1 });
+    const exportOptions = { ownerUser: req.currentUser };
 
     if (format === "pdf") {
-      return sendPdf(res, publications, "my_publications.pdf", "My Approved Publications");
+      return sendPdf(res, publications, "my_publications.pdf", "My Approved Publications", exportOptions);
     }
     if (format === "xlsx") {
-      return sendXlsx(res, publications, "my_publications.xlsx", "My Approved Publications");
+      return sendXlsx(res, publications, "my_publications.xlsx", "My Approved Publications", exportOptions);
     }
-    return sendCsv(res, publications, "my_publications.csv");
+    return sendCsv(res, publications, "my_publications.csv", exportOptions);
   } catch (error) {
     console.error("User export failed:", error);
     return res.status(500).json({ message: "Export failed" });

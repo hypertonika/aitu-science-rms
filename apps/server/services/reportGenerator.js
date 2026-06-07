@@ -1,25 +1,40 @@
-const { Document, Packer, Paragraph, Table, TableRow, TableCell, HeadingLevel, AlignmentType } = require('docx');
+const {
+  AlignmentType,
+  Document,
+  HeadingLevel,
+  Packer,
+  PageOrientation,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType,
+} = require('docx');
 const fs = require('fs');
 const path = require('path');
+const {
+  buildPublicationReportRows,
+  buildPublicationReportRowsByUser,
+  reportHeaders,
+} = require('./publicationReportRows');
 
 const reportsDir = path.join(__dirname, 'reports');
-
-const publicationTypeTitles = {
-  koknvo: 'CQAFSHE journals',
-  scopus_wos: 'Scopus / Web of Science',
-  conference: 'Conference proceedings',
-  articles: 'Local journals and other articles',
-  books: 'Books and teaching materials',
-  patents: 'Patents and certificates',
-};
 
 async function generateSingleUserReport(userData, publications = []) {
   ensureReportsDir();
 
-  const groupedTypes = groupByType(publications);
+  const rows = buildPublicationReportRows(publications, { ownerUser: userData });
   const doc = new Document({
     sections: [
       {
+        properties: {
+          page: {
+            size: {
+              orientation: PageOrientation.LANDSCAPE,
+            },
+          },
+        },
         children: [
           new Paragraph({
             text: 'Astana IT University',
@@ -38,7 +53,7 @@ async function generateSingleUserReport(userData, publications = []) {
             text: `Total publications: ${publications.length}`,
             alignment: AlignmentType.LEFT,
           }),
-          createPublicationTable(groupedTypes),
+          createPublicationTable(rows),
         ],
       },
     ],
@@ -82,7 +97,9 @@ async function generateAllPublicationsReport(publicationsByUser, higherSchool = 
   Object.entries(selectedSchools).forEach(([school, usersArr]) => {
     const schoolPublications = usersArr.flatMap(({ publications }) => publications || []);
     totalPublications += schoolPublications.length;
-    const groupedTypes = groupByType(schoolPublications);
+    const publicationRows = buildPublicationReportRowsByUser(
+      Object.fromEntries(usersArr.map((value, index) => [index, value]))
+    );
 
     docSections.push(
       new Paragraph({
@@ -94,7 +111,7 @@ async function generateAllPublicationsReport(publicationsByUser, higherSchool = 
         text: `Total publications: ${schoolPublications.length}`,
         alignment: AlignmentType.LEFT,
       }),
-      createPublicationTable(groupedTypes)
+      createPublicationTable(publicationRows)
     );
   });
 
@@ -104,59 +121,76 @@ async function generateAllPublicationsReport(publicationsByUser, higherSchool = 
     spacing: { after: 300 },
   }));
 
-  const doc = new Document({ sections: [{ children: docSections }] });
+  const doc = new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            size: {
+              orientation: PageOrientation.LANDSCAPE,
+            },
+          },
+        },
+        children: docSections,
+      },
+    ],
+  });
   const buffer = await Packer.toBuffer(doc);
   const filePath = path.join(reportsDir, `all_publications_${safeName(higherSchool)}_${new Date().getFullYear()}.docx`);
   fs.writeFileSync(filePath, buffer);
   return filePath;
 }
 
-function createPublicationTable(groupedTypes) {
+function createPublicationTable(reportRows) {
   const rows = [
     new TableRow({
-      children: [
-        cell('#'),
-        cell('Title'),
-        cell('Type'),
-        cell('Output'),
-        cell('Year'),
-        cell('Authors'),
-      ],
+      tableHeader: true,
+      children: reportHeaders.map((header) => cell(header, { header: true })),
     }),
   ];
 
-  let publicationIndex = 1;
-  Object.entries(groupedTypes).forEach(([type, publications]) => {
-    publications.forEach((publication) => {
-      rows.push(
-        new TableRow({
-          children: [
-            cell(String(publicationIndex++)),
-            cell(publication.title || ''),
-            cell(publicationTypeTitles[type] || type),
-            cell(publication.output || ''),
-            cell(publication.year || ''),
-            cell(publication.authors || ''),
-          ],
-        })
-      );
-    });
+  reportRows.forEach((row) => {
+    rows.push(new TableRow({
+      children: [
+        cell(row.number),
+        cell(row.teacherName),
+        cell(row.position),
+        cell(row.title),
+        cell(row.publicationType),
+        cell(row.journalOrConference),
+        cell(row.indexing),
+        cell(row.quartileOrLevel),
+        cell(row.year),
+        cell(row.doiOrLink),
+        cell(row.coauthors),
+        cell(row.status),
+      ],
+    }));
   });
 
-  return new Table({ rows });
+  return new Table({
+    rows,
+    width: {
+      size: 100,
+      type: WidthType.PERCENTAGE,
+    },
+  });
 }
 
-function cell(text) {
-  return new TableCell({ children: [new Paragraph(String(text || ''))] });
-}
-
-function groupByType(publications) {
-  return publications.reduce((acc, publication) => {
-    const type = publication.publicationType || 'articles';
-    if (!acc[type]) acc[type] = [];
-    acc[type].push(publication);
-    return acc;
-  }, {});
+function cell(text, options = {}) {
+  return new TableCell({
+    children: [
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: String(text || ''),
+            bold: Boolean(options.header),
+            size: options.header ? 16 : 15,
+          }),
+        ],
+      }),
+    ],
+  });
 }
 
 function ensureReportsDir() {
