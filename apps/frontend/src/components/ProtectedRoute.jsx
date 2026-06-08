@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode'
 import { refreshAccessToken } from '../services/api'
+import { useLanguage } from '../i18n'
 
 function getTokenRole(token) {
   try {
@@ -13,6 +14,7 @@ function getTokenRole(token) {
 
 export default function ProtectedRoute({ children, roles = [] }) {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [role, setRole] = useState(() => getTokenRole(localStorage.getItem('accessToken')))
   const [isChecking, setIsChecking] = useState(!role)
 
@@ -39,7 +41,7 @@ export default function ProtectedRoute({ children, roles = [] }) {
   if (isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-700">
-        Loading...
+        {t('Loading...')}
       </div>
     )
   }

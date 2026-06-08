@@ -16,6 +16,7 @@ import PublicationStats from '../components/PublicationStats/PublicationStats'
 import BarChart from '../components/PublicationStats/BarChart'
 import { publicationTypeMap } from '../constants/publications'
 import { makeAuthenticatedRequest } from '../services/api'
+import { useLanguage } from '../i18n'
 
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -43,6 +44,7 @@ const reviewSteps = [
 
 export default function AdminHome() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [statistics, setStatistics] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -92,13 +94,13 @@ export default function AdminHome() {
             <div>
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-sm font-medium text-cyan-700">
                 <LayoutDashboard className="h-4 w-4" />
-                Administration center
+                {t('Administration center')}
               </div>
               <h1 className="max-w-3xl text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">
-                Review research output, monitor schools and keep verified records publishable.
+                {t('Review research output, monitor schools and keep verified records publishable.')}
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-                This dashboard summarizes approved publications and gives administrators a fast path to user and publication review workflows.
+                {t('This dashboard summarizes approved publications and gives administrators a fast path to user and publication review workflows.')}
               </p>
             </div>
 
@@ -108,13 +110,13 @@ export default function AdminHome() {
                 className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
               >
                 <ClipboardCheck className="h-4 w-4" />
-                Review publications
+                {t('Review publications')}
               </Link>
               <Link
                 to="/admin-users"
                 className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"
               >
-                Manage users
+                {t('Manage users')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -124,25 +126,25 @@ export default function AdminHome() {
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             icon={FileText}
-            label="Approved publications"
+            label={t('Approved publications')}
             value={isLoading ? '...' : totalPublications}
             tone="blue"
           />
           <StatCard
             icon={Users}
-            label="Registered users"
+            label={t('Registered users')}
             value={isLoading ? '...' : totalUsers}
             tone="emerald"
           />
           <StatCard
             icon={Building2}
-            label="Active schools"
+            label={t('Active schools')}
             value={isLoading ? '...' : schoolEntries.length}
             tone="cyan"
           />
           <StatCard
             icon={BarChart3}
-            label="Publication categories"
+            label={t('Publication categories')}
             value={isLoading ? '...' : typeEntries.length}
             tone="amber"
           />
@@ -155,8 +157,8 @@ export default function AdminHome() {
                 <SearchCheck className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-950">Review focus</h2>
-                <p className="text-sm text-slate-500">Practical checks before approving records.</p>
+                <h2 className="text-base font-bold text-slate-950">{t('Review focus')}</h2>
+                <p className="text-sm text-slate-500">{t('Practical checks before approving records.')}</p>
               </div>
             </div>
 
@@ -164,7 +166,7 @@ export default function AdminHome() {
               {reviewSteps.map((step, index) => (
                 <div key={step} className="flex gap-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
                   <span className="font-bold text-blue-700">{String(index + 1).padStart(2, '0')}</span>
-                  <p className="leading-6">{step}</p>
+                  <p className="leading-6">{t(step)}</p>
                 </div>
               ))}
             </div>
@@ -172,12 +174,12 @@ export default function AdminHome() {
             <div className="mt-5 rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900">
               <div className="mb-2 flex items-center gap-2 font-bold">
                 <ShieldCheck className="h-4 w-4" />
-                Current leader
+                {t('Current leader')}
               </div>
               <p>
                 {topSchool
-                  ? `${formatSchoolName(topSchool[0])}: ${topSchool[1]} approved publications`
-                  : 'School distribution will appear after approvals.'}
+                  ? `${formatSchoolName(topSchool[0])}: ${topSchool[1]} ${t('approved publications')}`
+                  : t('School distribution will appear after approvals.')}
               </p>
             </div>
           </div>
@@ -188,8 +190,8 @@ export default function AdminHome() {
                 <Building2 className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-950">Publications by school</h2>
-                <p className="text-sm text-slate-500">Approved records grouped by author school.</p>
+                <h2 className="text-base font-bold text-slate-950">{t('Publications by school')}</h2>
+                <p className="text-sm text-slate-500">{t('Approved records grouped by author school.')}</p>
               </div>
             </div>
 
@@ -200,7 +202,7 @@ export default function AdminHome() {
                 height={320}
               />
             ) : (
-              <EmptyState text="No approved school data yet." />
+              <EmptyState text={t('No approved school data yet.')} />
             )}
           </div>
         </section>
@@ -212,8 +214,8 @@ export default function AdminHome() {
                 <BarChart3 className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-950">Research analytics</h2>
-                <p className="text-sm text-slate-500">Approved publications by type and year.</p>
+                <h2 className="text-base font-bold text-slate-950">{t('Research analytics')}</h2>
+                <p className="text-sm text-slate-500">{t('Approved publications by type and year.')}</p>
               </div>
             </div>
             <PublicationStats compact />
@@ -225,8 +227,8 @@ export default function AdminHome() {
                 <FileText className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-950">Type distribution</h2>
-                <p className="text-sm text-slate-500">A quick list for scanning category balance.</p>
+                <h2 className="text-base font-bold text-slate-950">{t('Type distribution')}</h2>
+                <p className="text-sm text-slate-500">{t('A quick list for scanning category balance.')}</p>
               </div>
             </div>
 
@@ -235,7 +237,7 @@ export default function AdminHome() {
                 {typeEntries.map(([type, count]) => (
                   <div key={type} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-4 py-3">
                     <span className="text-sm font-medium text-slate-700">
-                      {publicationTypeMap[type] || type}
+                      {t(publicationTypeMap[type] || type)}
                     </span>
                     <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-slate-950 shadow-sm">
                       {count}
@@ -244,7 +246,7 @@ export default function AdminHome() {
                 ))}
               </div>
             ) : (
-              <EmptyState text="No approved publication types yet." />
+              <EmptyState text={t('No approved publication types yet.')} />
             )}
           </div>
         </section>

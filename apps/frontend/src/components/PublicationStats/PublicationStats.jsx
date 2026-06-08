@@ -5,10 +5,12 @@ import { publicationTypeMap } from "../../constants/publications";
 import { makeAuthenticatedRequest } from "../../services/api";
 import BarChart from "./BarChart";
 import LineChart from "./LineChart";
+import { useLanguage } from "../../i18n";
 
 const url = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function PublicationStats({ compact = false }) {
+  const { t } = useLanguage();
   const [data, setData] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -55,20 +57,20 @@ export default function PublicationStats({ compact = false }) {
             <BarChart3 className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="text-base font-bold text-slate-950">Publications by type</h2>
-            <p className="text-sm text-slate-500">Approved records grouped by category.</p>
+            <h2 className="text-base font-bold text-slate-950">{t('Publications by type')}</h2>
+            <p className="text-sm text-slate-500">{t('Approved records grouped by category.')}</p>
           </div>
         </div>
 
         {typeKeys.length > 0 ? (
           <BarChart
-            labels={typeKeys.map((key) => publicationTypeMap[key] || key)}
+            labels={typeKeys.map((key) => t(publicationTypeMap[key] || key))}
             series={typeKeys.map((key) => data.types[key])}
             height={300}
           />
         ) : (
           <p className="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-500">
-            No approved publications yet.
+            {t('No approved publications yet.')}
           </p>
         )}
       </section>
@@ -79,21 +81,21 @@ export default function PublicationStats({ compact = false }) {
             <CalendarDays className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="text-base font-bold text-slate-950">Publication timeline</h2>
-            <p className="text-sm text-slate-500">Approved records by publication year.</p>
+            <h2 className="text-base font-bold text-slate-950">{t('Publication timeline')}</h2>
+            <p className="text-sm text-slate-500">{t('Approved records by publication year.')}</p>
           </div>
         </div>
 
         {yearKeys.length > 0 ? (
           <LineChart
-            seriesName="Publications"
+            seriesName={t('Publications')}
             labels={yearKeys}
             series={yearKeys.map((key) => data.years[key])}
             height={300}
           />
         ) : (
           <p className="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-500">
-            No yearly data yet.
+            {t('No yearly data yet.')}
           </p>
         )}
       </section>

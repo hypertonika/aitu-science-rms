@@ -13,6 +13,7 @@ import {
 import Navbar from '../components/Navbar'
 import PublicationStats from '../components/PublicationStats/PublicationStats'
 import { makeAuthenticatedRequest } from '../services/api'
+import { useLanguage } from '../i18n'
 
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -39,6 +40,7 @@ const quickActions = [
 
 export default function UserHome() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [stats, setStats] = useState({ years: {}, types: {} })
   const [isLoading, setIsLoading] = useState(true)
 
@@ -82,13 +84,13 @@ export default function UserHome() {
             <div className="p-6 sm:p-8">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
                 <Sparkles className="h-4 w-4" />
-                Research workspace
+                {t('Research workspace')}
               </div>
               <h1 className="max-w-3xl text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">
-                Keep your publication record clean, reviewed and ready for reporting.
+                {t('Keep your publication record clean, reviewed and ready for reporting.')}
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-                Add publications manually or by DOI, track review status, manage visibility and export verified records when you need them.
+                {t('Add publications manually or by DOI, track review status, manage visibility and export verified records when you need them.')}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
@@ -96,13 +98,13 @@ export default function UserHome() {
                   className="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
                 >
                   <Plus className="h-4 w-4" />
-                  Add publication
+                  {t('Add publication')}
                 </Link>
                 <Link
                   to="/resume"
                   className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"
                 >
-                  Open resume
+                  {t('Open resume')}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -111,16 +113,16 @@ export default function UserHome() {
             <div className="border-t border-slate-200 bg-slate-950 p-6 text-white sm:p-8 lg:border-l lg:border-t-0">
               <div className="flex h-full flex-col justify-between gap-8">
                 <div>
-                  <p className="text-sm font-medium text-cyan-200">Current profile</p>
-                  <p className="mt-2 text-2xl font-bold">Publication readiness</p>
+                  <p className="text-sm font-medium text-cyan-200">{t('Current profile')}</p>
+                  <p className="mt-2 text-2xl font-bold">{t('Publication readiness')}</p>
                   <p className="mt-3 text-sm leading-6 text-slate-300">
-                    Approved records are used in analytics, reports and public/institutional visibility.
+                    {t('Approved records are used in analytics, reports and public/institutional visibility.')}
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
-                  <MetricTile label="Approved" value={isLoading ? '...' : totalPublications} />
-                  <MetricTile label="Years" value={isLoading ? '...' : activeYears} />
-                  <MetricTile label="Types" value={isLoading ? '...' : publicationTypes} />
+                  <MetricTile label={t('Approved')} value={isLoading ? '...' : totalPublications} />
+                  <MetricTile label={t('Years')} value={isLoading ? '...' : activeYears} />
+                  <MetricTile label={t('Types')} value={isLoading ? '...' : publicationTypes} />
                 </div>
               </div>
             </div>
@@ -137,8 +139,8 @@ export default function UserHome() {
               <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-blue-700">
                 <action.icon className="h-5 w-5" />
               </div>
-              <h2 className="text-base font-bold text-slate-950">{action.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{action.description}</p>
+              <h2 className="text-base font-bold text-slate-950">{t(action.title)}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{t(action.description)}</p>
             </Link>
           ))}
         </section>
@@ -150,14 +152,14 @@ export default function UserHome() {
                 <ShieldCheck className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-950">Recommended workflow</h2>
-                <p className="text-sm text-slate-500">A simple path from draft to approved record.</p>
+                <h2 className="text-base font-bold text-slate-950">{t('Recommended workflow')}</h2>
+                <p className="text-sm text-slate-500">{t('A simple path from draft to approved record.')}</p>
               </div>
             </div>
             <div className="space-y-3 text-sm text-slate-700">
-              <WorkflowStep number="01" text="Create a draft or import metadata from Crossref by DOI." />
-              <WorkflowStep number="02" text="Attach evidence files and set visibility before submission." />
-              <WorkflowStep number="03" text="Submit for admin review and track status on the publications page." />
+              <WorkflowStep number="01" text={t('Create a draft or import metadata from Crossref by DOI.')} />
+              <WorkflowStep number="02" text={t('Attach evidence files and set visibility before submission.')} />
+              <WorkflowStep number="03" text={t('Submit for admin review and track status on the publications page.')} />
             </div>
           </div>
 
@@ -167,8 +169,8 @@ export default function UserHome() {
                 <TrendingUp className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-950">Your analytics</h2>
-                <p className="text-sm text-slate-500">Approved publications by type and year.</p>
+                <h2 className="text-base font-bold text-slate-950">{t('Your analytics')}</h2>
+                <p className="text-sm text-slate-500">{t('Approved publications by type and year.')}</p>
               </div>
             </div>
             <PublicationStats compact />

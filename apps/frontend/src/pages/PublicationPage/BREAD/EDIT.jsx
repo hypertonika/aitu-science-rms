@@ -3,9 +3,11 @@ import CustomDialog from "../../../components/CustomDialog/CustomDialog";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { makeAuthenticatedRequest } from "../../../services/api";
+import { useLanguage } from "../../../i18n";
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function EDIT({ pub, updateData, resetPage }) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [file, setFile] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -164,24 +166,24 @@ export default function EDIT({ pub, updateData, resetPage }) {
         onClick={() => setIsOpen(true)}
         className="inline-flex items-center rounded-lg bg-blue-700 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-800"
       >
-        Edit
+        {t("Edit")}
       </button>
-      <CustomDialog isOpen={isOpen} title="Edit publication" onClose={onClose}>
+      <CustomDialog isOpen={isOpen} title={t("Edit publication")} onClose={onClose}>
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col w-full"
         >
-          <h2 className="text-xl font-bold mb-4 text-gray-800">Текущая публикация</h2>
+          <h2 className="text-xl font-bold mb-4 text-gray-800">{t("Current publication")}</h2>
           {[
-            { title: "authors", label: "Авторы", validate: () => {} },
-            { title: "title", label: "Название", validate: () => {} },
+            { title: "authors", label: t("Authors"), validate: () => {} },
+            { title: "title", label: t("Title"), validate: () => {} },
             {
               title: "year",
-              label: "Год",
+              label: t("Year"),
               validate: (value) => {
                 const regex = /^\d{4}$/;
                 if (!regex.test(value)) {
-                  return "Year must be exactly 4 digits";
+                  return t("Year must be exactly 4 digits");
                 }
                 return true;
               },
@@ -197,7 +199,7 @@ export default function EDIT({ pub, updateData, resetPage }) {
                 defaultValue={pub?.[field.title]}
                 {...register(field.title, {
                   validate: field.validate,
-                  required: `${field.title} is required field`,
+                  required: t("This field is required"),
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
               />
@@ -209,13 +211,13 @@ export default function EDIT({ pub, updateData, resetPage }) {
 
           <div className="mb-4">
             <label className="block mb-1 font-medium text-gray-700">
-              Выходные данные
+              {t("Output")}
             </label>
             <textarea
               name="output"
               defaultValue={pub?.output}
               {...register("output", {
-                required: `Output is required field`,
+                required: t("This field is required"),
               })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
               rows={3}
@@ -228,13 +230,13 @@ export default function EDIT({ pub, updateData, resetPage }) {
           {pub?.publicationType === "scopus_wos" && (
             <>
               <label className="block mb-1 font-medium text-gray-700">
-                Ссылки, DOI
+                {t("Links, DOI")}
               </label>
               <input
                 type="text"
                 defaultValue={pub?.doi}
                 name="doi"
-                {...register("doi", { required: `DOI is required field` })}
+                {...register("doi", { required: t("This field is required") })}
                 className="w-full px-3 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
               />
               <span className="text-sm text-red-500">
@@ -267,13 +269,13 @@ export default function EDIT({ pub, updateData, resetPage }) {
           {pub?.publicationType === "koknvo" && (
             <>
               <label className="block mb-1 font-medium text-gray-700">
-                Ссылки, DOI
+                {t("Links, DOI")}
               </label>
               <input
                 type="text"
                 name="doi"
                 defaultValue={pub?.doi}
-                {...register("doi", { required: `DOI is required field` })}
+                {...register("doi", { required: t("This field is required") })}
                 className="w-full px-3 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
               />
               <span className="text-sm text-red-500">
@@ -291,7 +293,7 @@ export default function EDIT({ pub, updateData, resetPage }) {
                 name="isbn"
                 defaultValue={pub?.isbn}
                 {...register("isbn", {
-                  required: `ISBN is required field`,
+                  required: t("This field is required"),
                 })}
                 className="w-full px-3 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
               />
@@ -303,14 +305,14 @@ export default function EDIT({ pub, updateData, resetPage }) {
           {pub?.publicationType === "patents" && (
             <>
               <label className="block mb-1 font-medium text-gray-700">
-                DOI патента
+                {t("Patent DOI")}
               </label>
               <input
                 type="text"
                 name="patentDoi"
                 defaultValue={pub?.patentDoi}
                 {...register("patentDoi", {
-                  required: `Patent DOI is required field`,
+                  required: t("This field is required"),
                 })}
                 className="w-full px-3 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
               />
@@ -322,22 +324,22 @@ export default function EDIT({ pub, updateData, resetPage }) {
 
           <div className="mb-4">
             <label className="block mb-1 font-medium text-gray-700">
-              Видимость
+              {t("Visibility")}
             </label>
             <select
               defaultValue={pub?.visibility || "private"}
               {...register("visibility")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
             >
-              <option value="private">Приватно</option>
-              <option value="institutional">Внутри университета</option>
-              <option value="public">Публично</option>
+              <option value="private">{t("Private")}</option>
+              <option value="institutional">{t("Institutional")}</option>
+              <option value="public">{t("Public")}</option>
             </select>
           </div>
 
           <div className="mb-4">
             <label className="block mb-1 font-medium text-gray-700">
-              Загрузить файл (PDF, макс. 5MB)
+              {t("Upload file")} (PDF, DOC, DOCX, {t("max")} 10MB)
             </label>
             <input
               type="file"
@@ -362,7 +364,7 @@ export default function EDIT({ pub, updateData, resetPage }) {
               disabled={uploading}
               className="py-2 px-4 text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {uploading ? "Загрузка..." : "Сохранить"}
+              {uploading ? t("Uploading...") : t("Save")}
             </button>
           </div>
         </form>

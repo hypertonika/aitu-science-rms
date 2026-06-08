@@ -15,6 +15,7 @@ import { makeAuthenticatedRequest } from '../services/api'
 import { generateReport } from '../services/reportUtils'
 import Navbar from '../components/Navbar'
 import Pagination from '../components/Pagination/Pagination'
+import { useLanguage } from '../i18n'
 import {
   allHigherSchools,
   publicationTypeMap,
@@ -34,6 +35,7 @@ const statusStyles = {
 
 export default function AdminPublications() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [type, setType] = useState('')
   const [year, setYear] = useState('')
@@ -68,11 +70,11 @@ export default function AdminPublications() {
       }
     } catch (error) {
       console.error('Admin publications loading failed:', error)
-      setMessage('Could not load publications for review.')
+      setMessage(t('Could not load publications for review.'))
     } finally {
       setIsLoading(false)
     }
-  }, [navigate, school, search, status, type, year])
+  }, [navigate, school, search, status, t, type, year])
 
   useEffect(() => {
     fetchData()
@@ -108,17 +110,17 @@ export default function AdminPublications() {
         {
           method: 'PATCH',
           data: {
-            comment: comment || (action === 'approve' ? 'Approved' : 'Needs revision'),
+            comment: comment || (action === 'approve' ? t('Approved') : t('Needs revision')),
           },
         },
         navigate
       )
       setReviewComments((current) => ({ ...current, [id]: '' }))
-      setMessage(action === 'approve' ? 'Publication approved.' : 'Publication returned for revision.')
+      setMessage(action === 'approve' ? t('Publication approved.') : t('Publication returned for revision.'))
       fetchData()
     } catch (error) {
       console.error('Publication review failed:', error)
-      setMessage('Could not update publication status.')
+      setMessage(t('Could not update publication status.'))
     }
   }
 
@@ -149,7 +151,7 @@ export default function AdminPublications() {
       a.remove()
     } catch (error) {
       console.error('Admin publication export failed:', error)
-      setMessage('Could not export publications.')
+      setMessage(t('Could not export publications.'))
     }
   }
 
@@ -163,11 +165,11 @@ export default function AdminPublications() {
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
                 <ShieldCheck className="h-4 w-4" />
-                Admin review queue
+                {t('Admin review queue')}
               </div>
-              <h1 className="text-3xl font-bold text-slate-950">Publication Review</h1>
+              <h1 className="text-3xl font-bold text-slate-950">{t('Publication review')}</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Validate submitted research records, leave review comments and export approved publications.
+                {t('Validate submitted research records, leave review comments and export approved publications.')}
               </p>
             </div>
 
@@ -178,7 +180,7 @@ export default function AdminPublications() {
                 className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 <FileDown className="h-4 w-4" />
-                DOCX report
+                {t('DOCX report')}
               </button>
               <ExportButton label="CSV" icon={Download} onClick={() => handleExport('csv')} />
               <ExportButton label="PDF" icon={FileText} onClick={() => handleExport('pdf')} />
@@ -196,7 +198,7 @@ export default function AdminPublications() {
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-950">
             <Filter className="h-4 w-4" />
-            Review filters
+            {t('Review filters')}
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             <div className="relative md:col-span-2 xl:col-span-1">
@@ -205,7 +207,7 @@ export default function AdminPublications() {
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Title, author, DOI"
+                placeholder={t('Title, author, DOI')}
                 className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
@@ -213,7 +215,7 @@ export default function AdminPublications() {
               type="text"
               value={year}
               onChange={(event) => setYear(event.target.value)}
-              placeholder="Year"
+              placeholder={t('Year')}
               className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
             <select
@@ -221,9 +223,9 @@ export default function AdminPublications() {
               onChange={(event) => setType(event.target.value)}
               className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <option value="">All types</option>
+              <option value="">{t('All types')}</option>
               {Object.entries(publicationTypeMap).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+                <option key={value} value={value}>{t(label)}</option>
               ))}
             </select>
             <select
@@ -231,9 +233,9 @@ export default function AdminPublications() {
               onChange={(event) => setStatus(event.target.value)}
               className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <option value="">All statuses</option>
+              <option value="">{t('All statuses')}</option>
               {Object.entries(statusMap).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+                <option key={value} value={value}>{t(label)}</option>
               ))}
             </select>
             <select
@@ -241,19 +243,19 @@ export default function AdminPublications() {
               onChange={(event) => setSchool(event.target.value)}
               className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <option value="">All schools</option>
+              <option value="">{t('All schools')}</option>
               {allHigherSchools.map((schoolItem) => (
-                <option key={schoolItem} value={schoolItem}>{schoolItem}</option>
+                <option key={schoolItem} value={schoolItem}>{t(schoolItem)}</option>
               ))}
             </select>
           </div>
         </section>
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatusSummary label="In current view" value={publications.length} />
-          <StatusSummary label="Awaiting review" value={counts.submitted} tone="amber" />
-          <StatusSummary label="Approved" value={counts.approved} tone="emerald" />
-          <StatusSummary label="Rejected" value={counts.rejected} tone="rose" />
+          <StatusSummary label={t('In current view')} value={publications.length} />
+          <StatusSummary label={t('Awaiting review')} value={counts.submitted} tone="amber" />
+          <StatusSummary label={t('Approved')} value={counts.approved} tone="emerald" />
+          <StatusSummary label={t('Rejected')} value={counts.rejected} tone="rose" />
         </section>
 
         <section>
@@ -280,9 +282,9 @@ export default function AdminPublications() {
           ) : (
             <div className="flex min-h-96 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-6 text-center">
               <ShieldCheck className="mb-4 h-10 w-10 text-slate-400" />
-              <h2 className="text-lg font-bold text-slate-950">No publications in this view</h2>
+              <h2 className="text-lg font-bold text-slate-950">{t('No publications in this view')}</h2>
               <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                Try changing filters or check back after users submit publications for review.
+                {t('Try changing filters or check back after users submit publications for review.')}
               </p>
             </div>
           )}
@@ -301,6 +303,7 @@ export default function AdminPublications() {
 }
 
 function ReviewCard({ publication, comment, onCommentChange, onReview }) {
+  const { t } = useLanguage()
   const status = publication.status || 'draft'
   const canReview = status === 'submitted'
 
@@ -309,10 +312,10 @@ function ReviewCard({ publication, comment, onCommentChange, onReview }) {
       <div className="flex flex-1 flex-col p-5">
         <div className="mb-3 flex flex-wrap gap-2">
           <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyles[status] || statusStyles.draft}`}>
-            {statusMap[status] || status}
+            {t(statusMap[status] || status)}
           </span>
           <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
-            {publicationTypeMap[publication.publicationType] || 'Publication'}
+            {t(publicationTypeMap[publication.publicationType] || 'Publication')}
           </span>
         </div>
 
@@ -321,12 +324,12 @@ function ReviewCard({ publication, comment, onCommentChange, onReview }) {
         </h2>
 
         <div className="mt-4 space-y-2 text-sm text-slate-600">
-          <InfoRow label="Authors" value={publication.authors} />
-          <InfoRow label="Year" value={publication.year} />
-          <InfoRow label="Output" value={publication.output} clamp />
+          <InfoRow label={t('Authors')} value={publication.authors} />
+          <InfoRow label={t('Year')} value={publication.year} />
+          <InfoRow label={t('Output')} value={publication.output} clamp />
           <InfoRow label="DOI" value={publication.doi} />
-          <InfoRow label="Visibility" value={visibilityMap[publication.visibility] || publication.visibility || 'Private'} />
-          {publication.userId?.higherSchool && <InfoRow label="School" value={publication.userId.higherSchool} clamp />}
+          <InfoRow label={t('Visibility')} value={t(visibilityMap[publication.visibility] || publication.visibility || 'Private')} />
+          {publication.userId?.higherSchool && <InfoRow label={t('School')} value={t(publication.userId.higherSchool)} clamp />}
         </div>
 
         {publication.file && (
@@ -336,13 +339,13 @@ function ReviewCard({ publication, comment, onCommentChange, onReview }) {
             className="mt-4 inline-flex w-fit items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             <FileText className="h-3.5 w-3.5" />
-            Download evidence
+            {t('Download evidence')}
           </a>
         )}
 
         {publication.reviewComment && (
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            <p className="font-bold">Previous review</p>
+            <p className="font-bold">{t('Previous review')}</p>
             <p className="mt-1 line-clamp-3 leading-6">{publication.reviewComment}</p>
           </div>
         )}
@@ -354,7 +357,7 @@ function ReviewCard({ publication, comment, onCommentChange, onReview }) {
             <textarea
               value={comment}
               onChange={(event) => onCommentChange(event.target.value)}
-              placeholder="Optional review comment"
+              placeholder={t('Optional review comment')}
               rows={3}
               className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
@@ -365,7 +368,7 @@ function ReviewCard({ publication, comment, onCommentChange, onReview }) {
                 className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                Approve
+                {t('Approve')}
               </button>
               <button
                 type="button"
@@ -373,13 +376,13 @@ function ReviewCard({ publication, comment, onCommentChange, onReview }) {
                 className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
               >
                 <XCircle className="h-4 w-4" />
-                Reject
+                {t('Reject')}
               </button>
             </div>
           </div>
         ) : (
           <p className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-500">
-            This record is not awaiting review.
+            {t('This record is not awaiting review.')}
           </p>
         )}
       </div>

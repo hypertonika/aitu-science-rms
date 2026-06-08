@@ -68,14 +68,14 @@ export default function Dashboard() {
         }
       } catch (error) {
         console.error('Profile loading failed:', error)
-        setMessage('Could not load profile data.')
+        setMessage(t('Could not load profile data.'))
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchUserData()
-  }, [navigate, iin])
+  }, [navigate, iin, t])
 
   const handleInputChange = (event) => {
     const { name, value } = event.target
@@ -103,11 +103,11 @@ export default function Dashboard() {
 
       if (response?.status === 200) {
         setUserData((current) => ({ ...current, profilePhoto: response.data.profilePhoto }))
-        setMessage('Profile photo updated.')
+        setMessage(t('Profile photo updated.'))
       }
     } catch (error) {
       console.error('Photo upload failed:', error)
-      setMessage('Could not upload profile photo. Use an image up to 5 MB.')
+      setMessage(t('Could not upload profile photo. Use an image up to 5 MB.'))
     }
   }
 
@@ -139,11 +139,11 @@ export default function Dashboard() {
       if (response?.status === 200) {
         setUserData((current) => ({ ...current, ...(response.data.user || updateData) }))
         setIsEditing(false)
-        setMessage('Profile saved.')
+        setMessage(t('Profile saved.'))
       }
     } catch (error) {
       console.error('Profile update failed:', error)
-      setMessage(error.response?.data?.message || 'Could not save profile changes.')
+      setMessage(error.response?.data?.message || t('Could not save profile changes.'))
     }
   }
 
@@ -152,12 +152,12 @@ export default function Dashboard() {
     setPasswordMessage('')
 
     if (passwordForm.newPassword.length < 8) {
-      setPasswordMessage('New password must contain at least 8 characters.')
+      setPasswordMessage(t('New password must contain at least 8 characters.'))
       return
     }
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordMessage('New passwords do not match.')
+      setPasswordMessage(t('New passwords do not match.'))
       return
     }
 
@@ -177,11 +177,11 @@ export default function Dashboard() {
       if (response?.status === 200) {
         setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
         localStorage.removeItem('refreshToken')
-        setPasswordMessage('Password changed. Please sign in again after your next logout.')
+        setPasswordMessage(t('Password changed. Please sign in again after your next logout.'))
       }
     } catch (error) {
       console.error('Password change failed:', error)
-      setPasswordMessage(error.response?.data?.message || 'Could not change password.')
+      setPasswordMessage(error.response?.data?.message || t('Could not change password.'))
     }
   }
 
@@ -212,17 +212,17 @@ export default function Dashboard() {
                 />
               </div>
               <div className="mt-5 text-center">
-                <h1 className="text-xl font-bold">{userData.fullName || 'Your profile'}</h1>
-                <p className="mt-1 text-sm text-slate-300">{userData.email || 'Email not specified'}</p>
+                <h1 className="text-xl font-bold">{userData.fullName || t('Your profile')}</h1>
+                <p className="mt-1 text-sm text-slate-300">{userData.email || t('Email not specified')}</p>
                 <span className="mt-4 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-cyan-100">
-                  {userData.role === 'admin' ? 'Admin' : 'Researcher'}
+                  {userData.role === 'admin' ? t('Admin') : t('Researcher')}
                 </span>
               </div>
 
               {isEditing && !isAdmin && (
                 <label className="mt-6 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
                   <Camera className="h-4 w-4" />
-                  Upload photo
+                  {t('Upload photo')}
                   <input type="file" accept="image/*" onChange={handleProfilePhotoChange} className="hidden" />
                 </label>
               )}
@@ -233,11 +233,11 @@ export default function Dashboard() {
                 <div>
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
                     <UserRound className="h-4 w-4" />
-                    Academic profile
+                    {t('Academic profile')}
                   </div>
-                  <h2 className="text-3xl font-bold text-slate-950">Profile Details</h2>
+                  <h2 className="text-3xl font-bold text-slate-950">{t('Profile Details')}</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                    Keep identifiers, contacts and research interests accurate for reports and publication records.
+                    {t('Keep identifiers, contacts and research interests accurate for reports and publication records.')}
                   </p>
                 </div>
 
@@ -249,7 +249,7 @@ export default function Dashboard() {
                       className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
                     >
                       {isEditing ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-                      {isEditing ? 'Cancel' : 'Edit'}
+                      {isEditing ? t('Cancel') : t('Edit')}
                     </button>
                     {isEditing && (
                       <button
@@ -258,7 +258,7 @@ export default function Dashboard() {
                         className="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800"
                       >
                         <Save className="h-4 w-4" />
-                        Save
+                        {t('Save')}
                       </button>
                     )}
                   </div>
@@ -272,32 +272,32 @@ export default function Dashboard() {
               )}
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <Field name="fullName" label="Full name" value={userData.fullName} icon={IdCard} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
-                <Field name="email" label="Email" value={userData.email} icon={Mail} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
-                <Field name="phone" label="Phone" value={userData.phone} icon={Phone} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
-                <Field name="birthDate" label="Birth date" value={userData.birthDate} type="date" isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="fullName" label={t('Full name')} value={userData.fullName} icon={IdCard} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="email" label={t('Email')} value={userData.email} icon={Mail} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="phone" label={t('Phone')} value={userData.phone} icon={Phone} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="birthDate" label={t('Birth date')} value={userData.birthDate} type="date" isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
                 <Field name="orcid" label="ORCID" value={userData.orcid} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
-                <Field name="scopusId" label="Scopus Author ID" value={userData.scopusId} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
-                <Field name="wosId" label="Web of Science ID" value={userData.wosId} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="scopusId" label={t('Scopus Author ID')} value={userData.scopusId} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field name="wosId" label={t('Web of Science ID')} value={userData.wosId} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
                 <SelectField
                   name="profileVisibility"
-                  label="Profile visibility"
+                  label={t('Profile visibility')}
                   value={userData.profileVisibility || 'institutional'}
                   icon={Eye}
                   isEditing={isEditing && !isAdmin}
                   onChange={handleInputChange}
-                  options={Object.entries(visibilityMap).map(([value, label]) => ({ value, label }))}
+                  options={Object.entries(visibilityMap).map(([value, label]) => ({ value, label: t(label) }))}
                 />
                 <SelectField
                   name="higherSchool"
-                  label="Higher school"
+                  label={t('Higher school')}
                   value={userData.higherSchool || ''}
                   isEditing={isEditing && !isAdmin}
                   onChange={handleInputChange}
-                  options={allHigherSchools.map((school) => ({ value: school, label: school }))}
+                  options={allHigherSchools.map((school) => ({ value: school, label: t(school) }))}
                   wide
                 />
-                <Field name="researchArea" label="Research area" value={userData.researchArea} isEditing={isEditing && !isAdmin} onChange={handleInputChange} multiline wide />
+                <Field name="researchArea" label={t('Research area')} value={userData.researchArea} isEditing={isEditing && !isAdmin} onChange={handleInputChange} multiline wide />
               </div>
             </div>
           </div>
@@ -308,7 +308,7 @@ export default function Dashboard() {
             <div className="mb-5">
               <h2 className="text-xl font-bold text-slate-950">{t('changePassword')}</h2>
               <p className="mt-2 text-sm text-slate-500">
-                Use a strong password. After changing it, old refresh sessions are invalidated.
+                {t('Use a strong password. After changing it, old refresh sessions are invalidated.')}
               </p>
             </div>
 
@@ -360,6 +360,8 @@ function PasswordInput({ label, value, onChange }) {
 }
 
 function Field({ name, label, value, icon: Icon, isEditing, onChange, type = 'text', multiline = false, wide = false }) {
+  const { t } = useLanguage()
+
   return (
     <div className={`rounded-lg border border-slate-200 bg-slate-50 p-4 ${wide ? 'md:col-span-2' : ''}`}>
       <label className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
@@ -373,13 +375,14 @@ function Field({ name, label, value, icon: Icon, isEditing, onChange, type = 'te
           <input type={type} name={name} value={value || ''} onChange={onChange} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
         )
       ) : (
-        <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-slate-800">{value || 'Not specified'}</p>
+        <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-slate-800">{value || t('Not specified')}</p>
       )}
     </div>
   )
 }
 
 function SelectField({ name, label, value, icon: Icon, isEditing, onChange, options, wide = false }) {
+  const { t } = useLanguage()
   const selected = options.find((option) => option.value === value)
 
   return (
@@ -390,13 +393,13 @@ function SelectField({ name, label, value, icon: Icon, isEditing, onChange, opti
       </label>
       {isEditing ? (
         <select name={name} value={value} onChange={onChange} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-          <option value="">Not specified</option>
+          <option value="">{t('Not specified')}</option>
           {options.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
       ) : (
-        <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-slate-800">{selected?.label || value || 'Not specified'}</p>
+        <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-slate-800">{selected?.label || value || t('Not specified')}</p>
       )}
     </div>
   )

@@ -15,7 +15,7 @@ const HomePage = () => {
               <img src="/logo.png" alt="Astana IT University" className="h-12 w-12 object-contain" />
               <div>
                 <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">AITU Science RMS</p>
-                <p className="text-sm text-slate-500">Research Management System</p>
+                <p className="text-sm text-slate-500">{t('Research Management System')}</p>
               </div>
               <div className="ml-auto">
                 <LanguageToggle />
@@ -50,8 +50,8 @@ const HomePage = () => {
             <h2 className="text-lg font-bold text-slate-950">{t('dailyWork')}</h2>
             <div className="mt-5 divide-y divide-slate-200">
               <InfoRow title={t('researchers')} text={t('researchersText')} />
-              <InfoRow title="Administrators" text={t('adminsText')} />
-              <InfoRow title="Reports" text={t('reportsText')} />
+              <InfoRow title={t('Administrators')} text={t('adminsText')} />
+              <InfoRow title={t('Reports')} text={t('reportsText')} />
             </div>
           </aside>
         </div>

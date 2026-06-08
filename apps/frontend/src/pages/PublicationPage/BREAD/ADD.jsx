@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { makeAuthenticatedRequest } from "../../../services/api";
 import { publicationTypeMap } from "../../../constants/publications"; 
+import { useLanguage } from "../../../i18n";
 import {
   Listbox,
   ListboxButton,
@@ -14,6 +15,7 @@ import { crossrefService } from '../../../services/crossrefService';
 
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 export default function ADD({ updateData }) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [file, setFile] = useState(null);
@@ -33,8 +35,8 @@ export default function ADD({ updateData }) {
   } = useForm();
 
   useEffect(() => {
-    register("publicationType", { required: "Type is required" });
-  }, [register]);
+    register("publicationType", { required: t("Type is required") });
+  }, [register, t]);
 
   const selectedPublicationType = watch("publicationType");
 
@@ -172,11 +174,11 @@ export default function ADD({ updateData }) {
         onClick={() => setIsOpen(true)}
         className="inline-flex items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
       >
-        Add publication
+        {t("Add publication")}
       </button>
       <CustomDialog
         isOpen={isOpen}
-        title={"Добавить публикацию"}
+        title={t("Add publication")}
         onClose={onClose}
       >
         <form
@@ -186,7 +188,7 @@ export default function ADD({ updateData }) {
           {currentStep === 1 ? (
             <>
               <h2 className="text-xl font-bold mb-4 text-gray-800">
-                Выберите тип публикации
+                {t("Select publication type")}
               </h2>
               <div className="w-full mb-4">
                 <Listbox
@@ -197,8 +199,8 @@ export default function ADD({ updateData }) {
                     <ListboxButton className="w-full border border-gray-300 bg-white text-left px-4 py-2 cursor-pointer rounded-lg hover:border-gray-400 transition-colors duration-200 text-gray-800">
                       <span className="block overflow-hidden whitespace-nowrap text-ellipsis">
                         {selectedPublicationType
-                          ? publicationTypeMap[selectedPublicationType]
-                          : "Выберите тип публикации"}
+                          ? t(publicationTypeMap[selectedPublicationType])
+                          : t("Select publication type")}
                       </span>
                       <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                         <svg className="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -215,7 +217,7 @@ export default function ADD({ updateData }) {
                             `py-2 px-4 cursor-pointer ${active ? 'bg-indigo-500 text-white' : 'text-gray-800'}`
                           }
                         >
-                          {label}
+                          {t(label)}
                         </ListboxOption>
                       ))}
                     </ListboxOptions>
@@ -230,7 +232,7 @@ export default function ADD({ updateData }) {
                   const publicationType = getValues("publicationType");
                   if (!publicationType) {
                     setError("publicationType", {
-                      message: "Type is required field",
+                      message: t("Type is required field"),
                       type: "required",
                     });
                     return;
@@ -240,26 +242,26 @@ export default function ADD({ updateData }) {
                 type="button"
                 className="place-self-end py-2 px-4 text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
-                Следующий
+                {t("Next")}
               </button>
             </>
           ) : (
             <>
-              <h2 className="text-xl font-bold mb-4 text-gray-800">Новая публикация</h2>
+              <h2 className="text-xl font-bold mb-4 text-gray-800">{t("New publication")}</h2>
               <input type="hidden" {...register("journal")} />
               <input type="hidden" {...register("citations")} />
               <input type="hidden" {...register("source")} />
               {[
-                { title: "authors", label: "Авторы", validate: () => {} },
-                { title: "title", label: "Название", validate: () => {} },
+                { title: "authors", label: t("Authors"), validate: () => {} },
+                { title: "title", label: t("Title"), validate: () => {} },
                 {
                   title: "year",
-                  label: "Год",
+                  label: t("Year"),
                   validate: (value) => {
                     // Ensure the input has exactly 4 digits
                     const regex = /^\d{4}$/;
                     if (!regex.test(value)) {
-                      return "Year must be exactly 4 digits";
+                      return t("Year must be exactly 4 digits");
                     }
                     return true;
                   },
@@ -274,7 +276,7 @@ export default function ADD({ updateData }) {
                     name={field.title}
                     {...register(field.title, {
                       validate: field.validate,
-                      required: `${field.title} is required field`,
+                      required: t("This field is required"),
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
                   />
@@ -286,12 +288,12 @@ export default function ADD({ updateData }) {
 
               <div className="mb-4">
                 <label className="block mb-1 font-medium text-gray-700">
-                  Выходные данные
+                  {t("Output")}
                 </label>
                 <textarea
                   name="output"
                   {...register("output", {
-                    required: `Output is required field`,
+                    required: t("This field is required"),
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
                   rows={3}
@@ -303,13 +305,13 @@ export default function ADD({ updateData }) {
               {selectedPublicationType === "scopus_wos" && (
                 <>
                   <label className="block mb-1 font-medium text-gray-700">
-                    Ссылки, DOI
+                    {t("Links, DOI")}
                   </label>
                   <input
                     type="text"
                     name="doi"
                     {...register("doi", {
-                      required: `DOI is required field`,
+                      required: t("This field is required"),
                     })}
                     className="w-full px-3 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
                   />
@@ -322,7 +324,7 @@ export default function ADD({ updateData }) {
                     disabled={isLoading}
                     className="mb-4 py-2 px-4 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                   >
-                    {isLoading ? "Импорт..." : "Заполнить по DOI"}
+                    {isLoading ? t("Importing...") : t("Fill by DOI")}
                   </button>
                   <div className="flex flex-col space-y-3 mb-4">
                     <div className="flex items-center">
@@ -349,12 +351,12 @@ export default function ADD({ updateData }) {
               {selectedPublicationType === "koknvo" && (
                 <>
                   <label className="block mb-1 font-medium text-gray-700">
-                    Ссылки, DOI
+                    {t("Links, DOI")}
                   </label>
                   <input
                     type="text"
                     name="doi"
-                    {...register("doi", { required: `DOI is required field` })}
+                    {...register("doi", { required: t("This field is required") })}
                     className="w-full px-3 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
                   />
                   <span className="text-sm text-red-500">
@@ -366,7 +368,7 @@ export default function ADD({ updateData }) {
                     disabled={isLoading}
                     className="mb-4 py-2 px-4 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                   >
-                    {isLoading ? "Импорт..." : "Заполнить по DOI"}
+                    {isLoading ? t("Importing...") : t("Fill by DOI")}
                   </button>
                 </>
               )}
@@ -379,7 +381,7 @@ export default function ADD({ updateData }) {
                     type="text"
                     name="isbn"
                     {...register("isbn", {
-                      required: `ISBN is required field`,
+                      required: t("This field is required"),
                     })}
                     className="w-full px-3 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
                   />
@@ -391,13 +393,13 @@ export default function ADD({ updateData }) {
               {selectedPublicationType === "patents" && (
                 <>
                   <label className="block mb-1 font-medium text-gray-700">
-                    DOI патента
+                    {t("Patent DOI")}
                   </label>
                   <input
                     type="text"
                     name="patentDoi"
                     {...register("patentDoi", {
-                      required: `Patent DOI is required field`,
+                      required: t("This field is required"),
                     })}
                     className="w-full px-3 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
                   />
@@ -409,22 +411,22 @@ export default function ADD({ updateData }) {
 
               <div className="mb-4">
                 <label className="block mb-1 font-medium text-gray-700">
-                  Видимость
+                  {t("Visibility")}
                 </label>
                 <select
                   {...register("visibility")}
                   defaultValue="private"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
                 >
-                  <option value="private">Приватно</option>
-                  <option value="institutional">Внутри университета</option>
-                  <option value="public">Публично</option>
+                  <option value="private">{t("Private")}</option>
+                  <option value="institutional">{t("Institutional")}</option>
+                  <option value="public">{t("Public")}</option>
                 </select>
               </div>
 
               <div className="mb-4">
                 <label className="block mb-1 font-medium text-gray-700">
-                  Загрузить файл (PDF, макс. 5MB)
+                  {t("Upload file")} (PDF, DOC, DOCX, {t("max")} 10MB)
                 </label>
                 <input
                   type="file"
@@ -451,14 +453,14 @@ export default function ADD({ updateData }) {
                   type="button"
                   className="py-2 px-4 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
-                  Назад
+                  {t("Back")}
                 </button>
                 <button
                   type="submit"
                   disabled={uploading}
                   className="py-2 px-4 text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                 >
-                  {uploading ? "Загрузка..." : "Отправить"}
+                  {uploading ? t("Uploading...") : t("Submit")}
                 </button>
               </div>
             </>

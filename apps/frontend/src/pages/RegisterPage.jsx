@@ -22,22 +22,22 @@ const RegisterPage = () => {
     const normalizedEmail = email.trim().toLowerCase()
 
     if (!fullName.trim()) {
-      setMessage('Full name is required.')
+      setMessage(t('Full name is required.'))
       return
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      setMessage('Use a valid email address.')
+      setMessage(t('Use a valid email address.'))
       return
     }
 
     if (password.length < 8) {
-      setMessage('Password must contain at least 8 characters.')
+      setMessage(t('Password must contain at least 8 characters.'))
       return
     }
 
     if (password !== confirmPassword) {
-      setMessage('Passwords do not match.')
+      setMessage(t('Passwords do not match.'))
       return
     }
 
@@ -53,13 +53,13 @@ const RegisterPage = () => {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed.')
+        throw new Error(data.message || t('Registration failed.'))
       }
 
       navigate('/login')
     } catch (error) {
       console.error('Registration failed:', error)
-      setMessage(error.message || 'Registration failed.')
+      setMessage(error.message || t('Registration failed.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -74,7 +74,7 @@ const RegisterPage = () => {
               <img src="/logo.png" alt="Astana IT University" className="h-10 w-10 object-contain" />
               <div>
                 <p className="text-sm font-semibold text-slate-950">AITU Science RMS</p>
-                <p className="text-sm text-slate-500">Researcher access</p>
+                <p className="text-sm text-slate-500">{t('Researcher access')}</p>
               </div>
               <div className="ml-auto">
                 <LanguageToggle />
@@ -82,7 +82,7 @@ const RegisterPage = () => {
             </div>
             <h1 className="text-2xl font-bold text-slate-950">{t('createAccount')}</h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Register with your university email. Profile details can be completed after sign-in.
+              {t('Register with your university email. Profile details can be completed after sign-in.')}
             </p>
           </div>
 
@@ -96,7 +96,7 @@ const RegisterPage = () => {
                 required
                 autoComplete="name"
                 className="mt-2 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Researcher name"
+                placeholder={t('Researcher name')}
               />
             </div>
 
@@ -125,7 +125,7 @@ const RegisterPage = () => {
                 required
                 autoComplete="new-password"
                 className="mt-2 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Minimum 8 characters"
+                placeholder={t('Minimum 8 characters')}
               />
             </div>
 
@@ -138,7 +138,7 @@ const RegisterPage = () => {
                 required
                 autoComplete="new-password"
                 className="mt-2 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Repeat password"
+                placeholder={t('Repeat password')}
               />
             </div>
 
@@ -154,7 +154,7 @@ const RegisterPage = () => {
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <UserPlus className="h-4 w-4" />
-              {isSubmitting ? 'Creating account...' : t('createAccount')}
+              {isSubmitting ? t('Creating account...') : t('createAccount')}
             </button>
           </form>
 

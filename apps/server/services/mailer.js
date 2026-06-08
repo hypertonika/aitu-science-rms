@@ -34,18 +34,18 @@ async function sendPasswordResetEmail({ to, resetUrl }) {
   await transporter.sendMail({
     from: getMailFrom(),
     to,
-    subject: 'Reset your AITU Science RMS password',
+    subject: 'Сброс пароля AITU Science RMS',
     text: [
-      'You requested a password reset for AITU Science RMS.',
+      'Вы запросили сброс пароля для AITU Science RMS.',
       '',
-      `Open this link to set a new password: ${resetUrl}`,
+      `Откройте эту ссылку, чтобы задать новый пароль: ${resetUrl}`,
       '',
-      'This link expires in 1 hour. If you did not request it, you can ignore this email.',
+      'Ссылка действует 1 час. Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.',
     ].join('\n'),
     html: `
-      <p>You requested a password reset for AITU Science RMS.</p>
-      <p><a href="${resetUrl}">Set a new password</a></p>
-      <p>This link expires in 1 hour. If you did not request it, you can ignore this email.</p>
+      <p>Вы запросили сброс пароля для AITU Science RMS.</p>
+      <p><a href="${resetUrl}">Задать новый пароль</a></p>
+      <p>Ссылка действует 1 час. Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>
     `,
   });
 }

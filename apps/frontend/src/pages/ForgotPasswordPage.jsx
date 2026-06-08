@@ -2,10 +2,12 @@ import { ArrowLeft, Mail, Send } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import LanguageToggle from '../components/LanguageToggle'
+import { useLanguage } from '../i18n'
 
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 export default function ForgotPasswordPage() {
+  const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -19,7 +21,7 @@ export default function ForgotPasswordPage() {
     setError('')
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      setError('Use a valid email address.')
+      setError(t('Use a valid email address.'))
       return
     }
 
@@ -35,13 +37,13 @@ export default function ForgotPasswordPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Could not send password reset email.')
+        throw new Error(data.message || t('Could not send password reset email.'))
       }
 
       setMessage(data.message)
     } catch (requestError) {
       console.error('Password reset request failed:', requestError)
-      setError(requestError.message || 'Could not send password reset email.')
+      setError(requestError.message || t('Could not send password reset email.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -56,21 +58,21 @@ export default function ForgotPasswordPage() {
               <img src="/logo.png" alt="Astana IT University" className="h-10 w-10 object-contain" />
               <div>
                 <p className="text-sm font-semibold text-slate-950">AITU Science RMS</p>
-                <p className="text-sm text-slate-500">Password recovery</p>
+                <p className="text-sm text-slate-500">{t('Password recovery')}</p>
               </div>
               <div className="ml-auto">
                 <LanguageToggle />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-slate-950">Reset password</h1>
+            <h1 className="text-2xl font-bold text-slate-950">{t('Reset password')}</h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Enter your account email and we will send a password reset link.
+              {t('Enter your account email and we will send a password reset link.')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-slate-700">Email</label>
+              <label className="block text-sm font-semibold text-slate-700">{t('email')}</label>
               <div className="relative mt-2">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -103,7 +105,7 @@ export default function ForgotPasswordPage() {
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Send className="h-4 w-4" />
-              {isSubmitting ? 'Sending...' : 'Send reset link'}
+              {isSubmitting ? t('Sending...') : t('Send reset link')}
             </button>
           </form>
 
@@ -112,7 +114,7 @@ export default function ForgotPasswordPage() {
             className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to sign in
+            {t('Back to sign in')}
           </Link>
         </section>
       </div>

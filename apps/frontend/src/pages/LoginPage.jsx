@@ -20,7 +20,7 @@ const LoginPage = () => {
     const normalizedEmail = email.trim().toLowerCase()
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) && normalizedEmail !== 'admin') {
-      setError('Use your institutional email address.')
+      setError(t('Use your institutional email address.'))
       return
     }
 
@@ -37,7 +37,7 @@ const LoginPage = () => {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Unable to sign in.')
+        throw new Error(data.message || t('Unable to sign in.'))
       }
 
       localStorage.setItem('accessToken', data.accessToken)
@@ -47,7 +47,7 @@ const LoginPage = () => {
       navigate(decodedToken.role === 'admin' ? '/home-admin' : '/home-user')
     } catch (error) {
       console.error('Login failed:', error.message)
-      setError(error.message || 'Unable to sign in.')
+      setError(error.message || t('Unable to sign in.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -62,7 +62,7 @@ const LoginPage = () => {
               <img src="/logo.png" alt="Astana IT University" className="h-10 w-10 object-contain" />
               <div>
                 <p className="text-sm font-semibold text-slate-950">AITU Science RMS</p>
-                <p className="text-sm text-slate-500">Research workspace</p>
+                <p className="text-sm text-slate-500">{t('Research workspace')}</p>
               </div>
               <div className="ml-auto">
                 <LanguageToggle />
@@ -70,7 +70,7 @@ const LoginPage = () => {
             </div>
             <h1 className="text-2xl font-bold text-slate-950">{t('signIn')}</h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Use your university email to access publications, reports and review workflows.
+              {t('Use your university email to access publications, reports and review workflows.')}
             </p>
           </div>
 
@@ -103,11 +103,11 @@ const LoginPage = () => {
                 required
                 autoComplete="current-password"
                 className="mt-2 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Enter password"
+                placeholder={t('Enter password')}
               />
               <div className="mt-2 text-right">
                 <Link to="/forgot-password" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
-                  Forgot password?
+                  {t('Forgot password?')}
                 </Link>
               </div>
             </div>
@@ -124,7 +124,7 @@ const LoginPage = () => {
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <LogIn className="h-4 w-4" />
-              {isSubmitting ? 'Signing in...' : t('signIn')}
+              {isSubmitting ? t('Signing in...') : t('signIn')}
             </button>
           </form>
 

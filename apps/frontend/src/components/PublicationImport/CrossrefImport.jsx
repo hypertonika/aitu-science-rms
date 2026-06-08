@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { ExternalLink, Import, Search } from 'lucide-react'
 import { crossrefService } from '../../services/crossrefService'
 import { makeAuthenticatedRequest } from '../../services/api'
+import { useLanguage } from '../../i18n'
 
 const ITEMS_PER_PAGE = 3
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 export default function CrossrefImport({ onImportSuccess }) {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -34,11 +36,11 @@ export default function CrossrefImport({ onImportSuccess }) {
       const results = await crossrefService.searchWorksByAuthor(searchQuery)
       setSearchResults(results)
       if (results.length === 0) {
-        setMessage('No Crossref records found for this query.')
+        setMessage(t('No Crossref records found for this query.'))
       }
     } catch (error) {
       console.error('Crossref search failed:', error)
-      setMessage('Crossref search failed. Please try another query.')
+      setMessage(t('Crossref search failed. Please try another query.'))
     } finally {
       setIsLoading(false)
     }
@@ -82,14 +84,14 @@ export default function CrossrefImport({ onImportSuccess }) {
         },
         navigate
       )
-      setMessage('Imported as a draft. Review it before submission.')
+      setMessage(t('Imported as a draft. Review it before submission.'))
       onImportSuccess?.()
     } catch (error) {
       console.error('Crossref import failed:', error)
       setMessage(
         error.response?.status === 409
-          ? 'This publication already exists in the system.'
-          : 'Could not import the selected publication.'
+          ? t('This publication already exists in the system.')
+          : t('Could not import the selected publication.')
       )
     } finally {
       setImportingDoi(null)
@@ -103,8 +105,8 @@ export default function CrossrefImport({ onImportSuccess }) {
           <Import className="h-5 w-5" />
         </span>
         <div>
-          <h2 className="text-base font-bold text-slate-950">Crossref import</h2>
-          <p className="text-sm text-slate-500">Search by author, title or DOI and save a result as a draft.</p>
+          <h2 className="text-base font-bold text-slate-950">{t('Crossref import')}</h2>
+          <p className="text-sm text-slate-500">{t('Search by author, title or DOI and save a result as a draft.')}</p>
         </div>
       </div>
 
@@ -115,7 +117,7 @@ export default function CrossrefImport({ onImportSuccess }) {
             type="text"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Author, title or DOI"
+            placeholder={t('Author, title or DOI')}
             className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </div>
@@ -124,7 +126,7 @@ export default function CrossrefImport({ onImportSuccess }) {
           disabled={isLoading}
           className="inline-flex h-11 items-center justify-center rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-50"
         >
-          {isLoading ? 'Searching...' : 'Search'}
+          {isLoading ? t('Searching...') : t('Search')}
         </button>
       </form>
 
@@ -156,7 +158,7 @@ export default function CrossrefImport({ onImportSuccess }) {
                   </h3>
                   <p className="mt-2 text-sm text-slate-600">{publication.authors}</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    {publication.journal || 'Unknown source'} {publication.year ? `(${publication.year})` : ''}
+                    {publication.journal || t('Unknown source')} {publication.year ? `(${publication.year})` : ''}
                   </p>
                   {publication.doi && (
                     <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-700">
@@ -170,7 +172,7 @@ export default function CrossrefImport({ onImportSuccess }) {
                   onClick={(event) => handleImportDraft(publication, event)}
                   className="inline-flex items-center justify-center rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
-                  {importingDoi === publication.doi ? 'Importing...' : 'Import draft'}
+                  {importingDoi === publication.doi ? t('Importing...') : t('Import draft')}
                 </button>
               </div>
             </div>

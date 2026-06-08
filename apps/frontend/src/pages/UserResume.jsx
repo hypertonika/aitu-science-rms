@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { Download, FileText, Mail, Phone, UserRound } from 'lucide-react'
 import { makeAuthenticatedRequest } from '../services/api'
 import Navbar from '../components/Navbar'
+import { useLanguage } from '../i18n'
 
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 export default function UserResume() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -23,14 +25,14 @@ export default function UserResume() {
         }
       } catch (error) {
         console.error('Resume profile loading failed:', error)
-        setMessage('Could not load resume data.')
+        setMessage(t('Could not load resume data.'))
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchUserData()
-  }, [navigate])
+  }, [navigate, t])
 
   const generateResume = async (format) => {
     try {
@@ -47,7 +49,7 @@ export default function UserResume() {
 
       const data = response.data
       if (!data?.docxPath || !data?.pdfPath) {
-        throw new Error('Resume paths were not returned by the server.')
+        throw new Error(t('Resume paths were not returned by the server.'))
       }
 
       if (format === 'docx') {
@@ -57,7 +59,7 @@ export default function UserResume() {
       }
     } catch (error) {
       console.error('Resume generation failed:', error)
-      setMessage(error.response?.data?.message || 'Could not generate resume file.')
+      setMessage(error.response?.data?.message || t('Could not generate resume file.'))
     } finally {
       setIsGenerating(false)
     }
@@ -79,7 +81,7 @@ export default function UserResume() {
       <div className="min-h-screen bg-slate-50">
         <Navbar role="user" />
         <main className="mx-auto flex min-h-96 w-full max-w-7xl items-center justify-center px-4 py-6">
-          <p className="text-sm font-medium text-slate-500">{message || 'User not found.'}</p>
+          <p className="text-sm font-medium text-slate-500">{message || t('User not found.')}</p>
         </main>
       </div>
     )
@@ -95,21 +97,21 @@ export default function UserResume() {
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
                 <FileText className="h-4 w-4" />
-                Resume builder
+                {t('Resume builder')}
               </div>
-              <h1 className="text-3xl font-bold text-slate-950">Academic Resume</h1>
+              <h1 className="text-3xl font-bold text-slate-950">{t('Academic Resume')}</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Generate a DOCX or PDF resume from your profile and publication data.
+                {t('Generate a DOCX or PDF resume from your profile and publication data.')}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" disabled={isGenerating} onClick={() => generateResume('docx')} className="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60">
                 <Download className="h-4 w-4" />
-                {isGenerating ? 'Generating...' : 'DOCX'}
+                {isGenerating ? t('Generating...') : 'DOCX'}
               </button>
               <button type="button" disabled={isGenerating} onClick={() => generateResume('pdf')} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
                 <Download className="h-4 w-4" />
-                {isGenerating ? 'Generating...' : 'PDF'}
+                {isGenerating ? t('Generating...') : 'PDF'}
               </button>
             </div>
           </div>
@@ -128,28 +130,28 @@ export default function UserResume() {
                 <UserRound className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-950">{user.fullName || 'Unnamed researcher'}</h2>
+                <h2 className="text-base font-bold text-slate-950">{user.fullName || t('Unnamed researcher')}</h2>
                 <p className="text-sm text-slate-500">{user.email || user.iin}</p>
               </div>
             </div>
             <div className="space-y-3 text-sm text-slate-700">
-              <InfoRow icon={Mail} label="Email" value={user.email} />
-              <InfoRow icon={Phone} label="Phone" value={user.phone} />
-              <InfoRow label="Higher school" value={user.higherSchool} />
-              <InfoRow label="Research area" value={user.researchArea} />
+              <InfoRow icon={Mail} label={t('Email')} value={user.email} />
+              <InfoRow icon={Phone} label={t('Phone')} value={user.phone} />
+              <InfoRow label={t('Higher school')} value={user.higherSchool ? t(user.higherSchool) : ''} />
+              <InfoRow label={t('Research area')} value={user.researchArea} />
             </div>
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-bold text-slate-950">Resume readiness</h2>
+            <h2 className="text-base font-bold text-slate-950">{t('Resume readiness')}</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              The generated file uses your saved profile fields and approved publication data. For a stronger final resume, fill in email, phone, higher school, research area and author identifiers in your profile.
+              {t('The generated file uses your saved profile fields and approved publication data. For a stronger final resume, fill in email, phone, higher school, research area and author identifiers in your profile.')}
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <ReadinessItem label="Contact details" done={Boolean(user.email && user.phone)} />
-              <ReadinessItem label="Academic identifiers" done={Boolean(user.orcid || user.scopusId || user.wosId)} />
-              <ReadinessItem label="Research area" done={Boolean(user.researchArea)} />
-              <ReadinessItem label="Higher school" done={Boolean(user.higherSchool)} />
+              <ReadinessItem label={t('Contact details')} done={Boolean(user.email && user.phone)} />
+              <ReadinessItem label={t('Academic identifiers')} done={Boolean(user.orcid || user.scopusId || user.wosId)} />
+              <ReadinessItem label={t('Research area')} done={Boolean(user.researchArea)} />
+              <ReadinessItem label={t('Higher school')} done={Boolean(user.higherSchool)} />
             </div>
           </div>
         </section>
@@ -159,25 +161,29 @@ export default function UserResume() {
 }
 
 function InfoRow({ icon: Icon, label, value }) {
+  const { t } = useLanguage()
+
   return (
     <div className="rounded-lg bg-slate-50 p-3">
       <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
         {Icon && <Icon className="h-3.5 w-3.5" />}
         {label}
       </p>
-      <p className="whitespace-pre-wrap font-medium leading-6 text-slate-800">{value || 'Not specified'}</p>
+      <p className="whitespace-pre-wrap font-medium leading-6 text-slate-800">{value || t('Not specified')}</p>
     </div>
   )
 }
 
 function ReadinessItem({ label, done }) {
+  const { t } = useLanguage()
+
   return (
     <div className={`rounded-lg border p-3 text-sm font-semibold ${
       done
         ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
         : 'border-amber-200 bg-amber-50 text-amber-700'
     }`}>
-      {label}: {done ? 'Ready' : 'Missing'}
+      {label}: {done ? t('Ready') : t('Missing')}
     </div>
   )
 }

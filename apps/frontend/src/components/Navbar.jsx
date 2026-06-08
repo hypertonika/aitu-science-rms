@@ -74,7 +74,7 @@ const Navbar = ({ role = 'user' }) => {
         <button
           onClick={() => setIsMobileMenuOpen((value) => !value)}
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 md:hidden"
-          aria-label="Toggle navigation"
+          aria-label={t('Toggle navigation')}
         >
           {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>

@@ -14,6 +14,7 @@ import Navbar from '../components/Navbar'
 import Pagination from '../components/Pagination/Pagination'
 import { generateUserReport } from '../services/reportUtils'
 import { publicationTypeMap, statusMap, visibilityMap } from '../constants/publications'
+import { useLanguage } from '../i18n'
 
 const url = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 const itemsPerPage = 8
@@ -28,6 +29,7 @@ const statusStyles = {
 export default function UserProfile() {
   const navigate = useNavigate()
   const { iin } = useParams()
+  const { t } = useLanguage()
   const [user, setUser] = useState(null)
   const [publications, setPublications] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -60,14 +62,14 @@ export default function UserProfile() {
         }
       } catch (error) {
         console.error('User profile loading failed:', error)
-        setMessage('Could not load this user profile.')
+        setMessage(t('Could not load this user profile.'))
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchUserProfile()
-  }, [navigate, iin])
+  }, [navigate, iin, t])
 
   const counts = useMemo(() => {
     return publications.reduce(
@@ -103,7 +105,7 @@ export default function UserProfile() {
       <div className="min-h-screen bg-slate-50">
         <Navbar role="admin" />
         <main className="mx-auto flex min-h-96 w-full max-w-7xl items-center justify-center px-4 py-6">
-          <p className="text-sm font-medium text-slate-500">{message || 'User not found.'}</p>
+          <p className="text-sm font-medium text-slate-500">{message || t('User not found.')}</p>
         </main>
       </div>
     )
@@ -125,10 +127,10 @@ export default function UserProfile() {
                 />
               </div>
               <div className="mt-5 text-center">
-                <p className="text-xl font-bold">{user.fullName || 'Unnamed researcher'}</p>
+                <p className="text-xl font-bold">{user.fullName || t('Unnamed researcher')}</p>
                 <p className="mt-1 text-sm text-slate-300">{user.email || user.iin}</p>
                 <span className="mt-4 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-cyan-100">
-                  {user.role === 'admin' ? 'Admin' : 'Researcher'}
+                  {user.role === 'admin' ? t('Admin') : t('Researcher')}
                 </span>
               </div>
             </div>
@@ -138,11 +140,11 @@ export default function UserProfile() {
                 <div>
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
                     <UserRound className="h-4 w-4" />
-                    Researcher profile
+                    {t('Researcher profile')}
                   </div>
-                  <h1 className="text-3xl font-bold text-slate-950">{user.fullName || 'User profile'}</h1>
+                  <h1 className="text-3xl font-bold text-slate-950">{user.fullName || t('User profile')}</h1>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                    Administrative view of profile details, identifiers and publication history.
+                    {t('Administrative view of profile details, identifiers and publication history.')}
                   </p>
                 </div>
                 <button
@@ -151,29 +153,29 @@ export default function UserProfile() {
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   <Download className="h-4 w-4" />
-                  DOCX report
+                  {t('DOCX report')}
                 </button>
               </div>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <ProfileField label="Email" value={user.email} icon={Mail} />
-                <ProfileField label="Phone" value={user.phone} icon={Phone} />
-                <ProfileField label="Higher school" value={user.higherSchool} />
-                <ProfileField label="Visibility" value={user.profileVisibility || 'institutional'} />
+                <ProfileField label={t('Email')} value={user.email} icon={Mail} />
+                <ProfileField label={t('Phone')} value={user.phone} icon={Phone} />
+                <ProfileField label={t('Higher school')} value={user.higherSchool ? t(user.higherSchool) : ''} />
+                <ProfileField label={t('Visibility')} value={t(visibilityMap[user.profileVisibility] || 'Institutional')} />
                 <ProfileField label="ORCID" value={user.orcid} />
-                <ProfileField label="Scopus Author ID" value={user.scopusId} />
-                <ProfileField label="Web of Science ID" value={user.wosId} />
-                <ProfileField label="Research area" value={user.researchArea} wide />
+                <ProfileField label={t('Scopus Author ID')} value={user.scopusId} />
+                <ProfileField label={t('Web of Science ID')} value={user.wosId} />
+                <ProfileField label={t('Research area')} value={user.researchArea} wide />
               </div>
             </div>
           </div>
         </section>
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SummaryCard label="All publications" value={publications.length} />
-          <SummaryCard label="Submitted" value={counts.submitted} tone="amber" />
-          <SummaryCard label="Approved" value={counts.approved} tone="emerald" />
-          <SummaryCard label="Rejected" value={counts.rejected} tone="rose" />
+          <SummaryCard label={t('All publications')} value={publications.length} />
+          <SummaryCard label={t('Submitted')} value={counts.submitted} tone="amber" />
+          <SummaryCard label={t('Approved')} value={counts.approved} tone="emerald" />
+          <SummaryCard label={t('Rejected')} value={counts.rejected} tone="rose" />
         </section>
 
         <section className="grid gap-4 lg:grid-cols-2">
@@ -187,8 +189,8 @@ export default function UserProfile() {
               <FileText className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-base font-bold text-slate-950">Publication history</h2>
-              <p className="text-sm text-slate-500">Records associated with this user account.</p>
+              <h2 className="text-base font-bold text-slate-950">{t('Publication history')}</h2>
+              <p className="text-sm text-slate-500">{t('Records associated with this user account.')}</p>
             </div>
           </div>
 
@@ -201,8 +203,8 @@ export default function UserProfile() {
           ) : (
             <div className="flex min-h-72 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 text-center">
               <FileText className="mb-4 h-10 w-10 text-slate-400" />
-              <h3 className="text-lg font-bold text-slate-950">No publications yet</h3>
-              <p className="mt-2 text-sm text-slate-500">This user has not created publication records.</p>
+              <h3 className="text-lg font-bold text-slate-950">{t('No publications yet')}</h3>
+              <p className="mt-2 text-sm text-slate-500">{t('This user has not created publication records.')}</p>
             </div>
           )}
         </section>
@@ -220,6 +222,8 @@ export default function UserProfile() {
 }
 
 function ProfileField({ label, value, icon: Icon, wide = false }) {
+  const { t } = useLanguage()
+
   return (
     <div className={`rounded-lg border border-slate-200 bg-slate-50 p-4 ${wide ? 'md:col-span-2' : ''}`}>
       <div className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
@@ -227,13 +231,14 @@ function ProfileField({ label, value, icon: Icon, wide = false }) {
         {label}
       </div>
       <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-slate-800">
-        {value || 'Not specified'}
+        {value || t('Not specified')}
       </p>
     </div>
   )
 }
 
 function TrendCard({ user }) {
+  const { t } = useLanguage()
   const status = user.publicationTrend?.status
   const isGrowing = status === 'growing'
   const isDeclining = status === 'declining'
@@ -247,17 +252,19 @@ function TrendCard({ user }) {
           <Icon className="h-5 w-5" />
         </span>
         <div>
-          <h2 className="text-base font-bold text-slate-950">Publication trend</h2>
-          <p className="text-sm text-slate-500">Based on available publication years.</p>
+          <h2 className="text-base font-bold text-slate-950">{t('Publication trend')}</h2>
+          <p className="text-sm text-slate-500">{t('Based on available publication years.')}</p>
         </div>
       </div>
-      <p className="text-2xl font-bold capitalize text-slate-950">{status || 'No data'}</p>
-      <p className="mt-2 text-sm text-slate-600">{user.publicationTrend?.rate || 'Not enough data for trend analysis.'}</p>
+      <p className="text-2xl font-bold capitalize text-slate-950">{status ? t(status) : t('No data')}</p>
+      <p className="mt-2 text-sm text-slate-600">{user.publicationTrend?.rate || t('Not enough data for trend analysis.')}</p>
     </div>
   )
 }
 
 function PredictionCard({ user }) {
+  const { t } = useLanguage()
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center gap-3">
@@ -265,39 +272,40 @@ function PredictionCard({ user }) {
           <TrendingUp className="h-5 w-5" />
         </span>
         <div>
-          <h2 className="text-base font-bold text-slate-950">Next-year estimate</h2>
-          <p className="text-sm text-slate-500">Simple projection from historical counts.</p>
+          <h2 className="text-base font-bold text-slate-950">{t('Next-year estimate')}</h2>
+          <p className="text-sm text-slate-500">{t('Simple projection from historical counts.')}</p>
         </div>
       </div>
       <p className="text-3xl font-bold text-slate-950">{user.publicationPrediction?.count ?? 0}</p>
       <p className="mt-2 text-sm text-slate-600">
-        {user.publicationPrediction?.basedOn || 'Not enough data for prediction.'}
+        {user.publicationPrediction?.basedOn || t('Not enough data for prediction.')}
       </p>
     </div>
   )
 }
 
 function PublicationCard({ publication }) {
+  const { t } = useLanguage()
   const status = publication.status || 'draft'
 
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap gap-2">
         <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyles[status] || statusStyles.draft}`}>
-          {statusMap[status] || status}
+          {t(statusMap[status] || status)}
         </span>
         <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
-          {publicationTypeMap[publication.publicationType] || 'Publication'}
+          {t(publicationTypeMap[publication.publicationType] || 'Publication')}
         </span>
       </div>
       <h3 className="line-clamp-3 text-sm font-bold leading-6 text-slate-950" title={publication.title}>
         {publication.title}
       </h3>
       <div className="mt-3 space-y-2 text-sm text-slate-600">
-        <InfoRow label="Authors" value={publication.authors} />
-        <InfoRow label="Year" value={publication.year} />
+        <InfoRow label={t('Authors')} value={publication.authors} />
+        <InfoRow label={t('Year')} value={publication.year} />
         <InfoRow label="DOI" value={publication.doi} />
-        <InfoRow label="Visibility" value={visibilityMap[publication.visibility] || publication.visibility || 'Private'} />
+        <InfoRow label={t('Visibility')} value={t(visibilityMap[publication.visibility] || publication.visibility || 'Private')} />
       </div>
     </article>
   )
