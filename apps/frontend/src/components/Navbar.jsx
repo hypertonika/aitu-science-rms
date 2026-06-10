@@ -40,9 +40,9 @@ const Navbar = ({ role = 'user' }) => {
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <NavLink to={role === 'admin' ? '/home-admin' : '/home-user'} className="flex items-center gap-3">
-          <img src="/logo.png" alt="AITU" className="h-9 w-9 object-contain" />
+          <img src="/logo.png" alt="Astana IT University" className="h-10 w-auto max-w-[96px] object-contain" />
           <div className="leading-tight">
-            <p className="text-sm font-bold text-slate-950">AITU Science RMS</p>
+            <p className="text-sm font-bold text-slate-950">AITU Science</p>
             <p className="text-xs text-slate-500">{role === 'admin' ? t('adminWorkspace') : t('researcherWorkspace')}</p>
           </div>
         </NavLink>

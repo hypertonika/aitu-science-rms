@@ -3,6 +3,8 @@ FROM node:18.20.8-alpine
 
 # create destination directory
 WORKDIR /usr/src/app
+ARG VITE_API_URL=http://localhost:5000
+ENV VITE_API_URL=$VITE_API_URL
 
 # update and install dependency
 RUN apk update && apk upgrade

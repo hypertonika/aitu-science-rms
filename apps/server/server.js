@@ -36,6 +36,7 @@ const userUploadPhoto = require("./pages/api/user/uploadPhoto");
 const userEditPublication = require("./pages/api/user/editPublication");
 const stats = require("./pages/api/user/stats");
 const crossrefIntegration = require("./pages/api/integrations/crossref");
+const researchProfileIntegration = require("./pages/api/integrations/researchProfiles");
 
 // user/publications
 const userPublicationsUpload = require("./pages/api/user/upload");
@@ -73,6 +74,7 @@ app.use("/api/auth/forgot-password", authForgotPassword);
 app.use("/api/auth/reset-password", authResetPassword);
 
 app.use("/api/integrations/crossref", crossrefIntegration);
+app.use("/api/integrations/research-profiles", researchProfileIntegration);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok" });

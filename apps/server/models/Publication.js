@@ -67,7 +67,7 @@ const publicationSchema = new mongoose.Schema(
     },
     source: {
       type: String,
-      enum: ["manual", "crossref", "du"],
+      enum: ["manual", "crossref", "du", "orcid", "wos"],
       default: "manual",
     },
     journal: {

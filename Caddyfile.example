@@ -1,0 +1,17 @@
+aituscience.digital, www.aituscience.digital {
+  handle /api/* {
+    reverse_proxy localhost:5000
+  }
+
+  handle /public/* {
+    reverse_proxy localhost:5000
+  }
+
+  handle /uploads/* {
+    reverse_proxy localhost:5000
+  }
+
+  handle {
+    reverse_proxy localhost:5173
+  }
+}

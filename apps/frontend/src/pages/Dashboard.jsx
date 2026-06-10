@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode'
 import {
   Camera,
+  Download,
   Eye,
   IdCard,
+  Link2,
   Mail,
   Pencil,
   Phone,
@@ -43,6 +45,7 @@ export default function Dashboard() {
   const [message, setMessage] = useState('')
   const [passwordMessage, setPasswordMessage] = useState('')
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [profileImporting, setProfileImporting] = useState(null)
   const [userData, setUserData] = useState(initialUserData)
   const { t } = useLanguage()
 
@@ -76,6 +79,28 @@ export default function Dashboard() {
 
     fetchUserData()
   }, [navigate, iin, t])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const importSource = params.get('profileImport')
+    const importError = params.get('profileImportError')
+
+    if (importSource) {
+      setMessage(formatProfileImportMessage({
+        sourceLabel: importSource === 'orcid' ? 'ORCID' : t('Web of Science ID'),
+        importedCount: Number(params.get('imported') || 0),
+        skippedCount: Number(params.get('skipped') || 0),
+        total: Number(params.get('total') || 0),
+        t,
+      }))
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+
+    if (importError) {
+      setMessage(t('Could not import publications from the connected profile.'))
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [t])
 
   const handleInputChange = (event) => {
     const { name, value } = event.target
@@ -144,6 +169,60 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Profile update failed:', error)
       setMessage(error.response?.data?.message || t('Could not save profile changes.'))
+    }
+  }
+
+  const handleProfileImport = async (source) => {
+    const sourceLabel = source === 'orcid' ? 'ORCID' : t('Web of Science ID')
+    const fieldName = source === 'orcid' ? 'orcid' : 'wosId'
+    const identifier = String(userData[fieldName] || '').trim()
+
+    if (!identifier) {
+      setMessage(source === 'orcid' ? t('Enter ORCID iD first.') : t('Enter Web of Science ID first.'))
+      return
+    }
+
+    try {
+      setMessage('')
+      setProfileImporting(source)
+      const response = await makeAuthenticatedRequest(
+        `${url}/api/integrations/research-profiles/${source}/import`,
+        {
+          method: 'POST',
+          data: source === 'orcid' ? { orcid: identifier } : { wosId: identifier },
+        },
+        navigate
+      )
+
+      if (response?.status === 200) {
+        setUserData((current) => ({ ...current, ...(response.data.user || {}) }))
+        setMessage(formatProfileImportMessage({ ...response.data, sourceLabel, t }))
+      }
+    } catch (error) {
+      console.error(`${sourceLabel} import failed:`, error)
+      setMessage(error.response?.data?.message || t('Could not import publications from the connected profile.'))
+    } finally {
+      setProfileImporting(null)
+    }
+  }
+
+  const handleOrcidAuthorize = async () => {
+    try {
+      setMessage('')
+      setProfileImporting('orcid-auth')
+      const response = await makeAuthenticatedRequest(
+        `${url}/api/integrations/research-profiles/orcid/authorize`,
+        { method: 'GET' },
+        navigate
+      )
+
+      if (response?.data?.authorizationUrl) {
+        window.location.href = response.data.authorizationUrl
+      }
+    } catch (error) {
+      console.error('ORCID authorization failed:', error)
+      setMessage(error.response?.data?.message || t('Could not start ORCID authorization.'))
+      setProfileImporting(null)
     }
   }
 
@@ -276,9 +355,46 @@ export default function Dashboard() {
                 <Field name="email" label={t('Email')} value={userData.email} icon={Mail} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
                 <Field name="phone" label={t('Phone')} value={userData.phone} icon={Phone} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
                 <Field name="birthDate" label={t('Birth date')} value={userData.birthDate} type="date" isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
-                <Field name="orcid" label="ORCID" value={userData.orcid} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field
+                  name="orcid"
+                  label="ORCID"
+                  value={userData.orcid}
+                  isEditing={isEditing && !isAdmin}
+                  onChange={handleInputChange}
+                  actions={!isAdmin && (
+                    <>
+                      <ProfileImportButton
+                        icon={Download}
+                        label={profileImporting === 'orcid' ? t('Importing...') : t('Import works')}
+                        onClick={() => handleProfileImport('orcid')}
+                        disabled={Boolean(profileImporting) || !String(userData.orcid || '').trim()}
+                      />
+                      <ProfileImportButton
+                        icon={Link2}
+                        label={profileImporting === 'orcid-auth' ? t('Opening...') : t('Authorize ORCID')}
+                        onClick={handleOrcidAuthorize}
+                        disabled={Boolean(profileImporting)}
+                        secondary
+                      />
+                    </>
+                  )}
+                />
                 <Field name="scopusId" label={t('Scopus Author ID')} value={userData.scopusId} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
-                <Field name="wosId" label={t('Web of Science ID')} value={userData.wosId} isEditing={isEditing && !isAdmin} onChange={handleInputChange} />
+                <Field
+                  name="wosId"
+                  label={t('Web of Science ID')}
+                  value={userData.wosId}
+                  isEditing={isEditing && !isAdmin}
+                  onChange={handleInputChange}
+                  actions={!isAdmin && (
+                    <ProfileImportButton
+                      icon={Download}
+                      label={profileImporting === 'wos' ? t('Importing...') : t('Import works')}
+                      onClick={() => handleProfileImport('wos')}
+                      disabled={Boolean(profileImporting) || !String(userData.wosId || '').trim()}
+                    />
+                  )}
+                />
                 <SelectField
                   name="profileVisibility"
                   label={t('Profile visibility')}
@@ -359,7 +475,7 @@ function PasswordInput({ label, value, onChange }) {
   )
 }
 
-function Field({ name, label, value, icon: Icon, isEditing, onChange, type = 'text', multiline = false, wide = false }) {
+function Field({ name, label, value, icon: Icon, isEditing, onChange, type = 'text', multiline = false, wide = false, actions }) {
   const { t } = useLanguage()
 
   return (
@@ -377,8 +493,41 @@ function Field({ name, label, value, icon: Icon, isEditing, onChange, type = 'te
       ) : (
         <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-slate-800">{value || t('Not specified')}</p>
       )}
+      {actions && <div className="mt-3 flex flex-wrap gap-2">{actions}</div>}
     </div>
   )
+}
+
+function ProfileImportButton({ icon: Icon, label, onClick, disabled, secondary = false }) {
+  const hasIcon = Boolean(Icon)
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex h-9 items-center justify-center gap-2 rounded-lg px-3 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+        secondary
+          ? 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+          : 'bg-slate-950 text-white hover:bg-slate-800'
+      }`}
+    >
+      {hasIcon && <Icon className="h-3.5 w-3.5" />}
+      {label}
+    </button>
+  )
+}
+
+function formatProfileImportMessage({ sourceLabel, importedCount = 0, skippedCount = 0, total = 0, t }) {
+  if (importedCount > 0) {
+    return `${sourceLabel}: ${t('Imported drafts')}: ${importedCount}. ${t('Skipped duplicates or incomplete records')}: ${skippedCount}.`
+  }
+
+  if (total > 0) {
+    return `${sourceLabel}: ${t('No new drafts imported.')}. ${t('Skipped duplicates or incomplete records')}: ${skippedCount}.`
+  }
+
+  return `${sourceLabel}: ${t('No publications found on this profile.')}`
 }
 
 function SelectField({ name, label, value, icon: Icon, isEditing, onChange, options, wide = false }) {
