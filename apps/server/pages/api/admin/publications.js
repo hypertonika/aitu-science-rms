@@ -4,16 +4,20 @@ const ApprovalRecord = require("../../../models/ApprovalRecord");
 const { verifyToken, authenticateAdmin } = require("../../../middleware/auth");
 const { buildPublicationFilters, findDuplicatePublication, addNormalizedPublicationFields } = require("../../../services/publicationUtils");
 const { sendCsv, sendPdf, sendXlsx } = require("../../../services/exportUtils");
+const { buildReportOptions, sortPublicationsForReport } = require("../../../services/reportOptions");
 
 const router = express.Router();
 
 router.get("/export", verifyToken, authenticateAdmin, async (req, res) => {
   try {
     const format = ["csv", "pdf", "xlsx"].includes(req.query.format) ? req.query.format : "csv";
-    const filter = {
-      status: "approved",
-      ...buildPublicationFilters(req.query),
-    };
+    const filter = buildPublicationFilters(req.query);
+    filter.status = "approved";
+    const reportOptions = buildReportOptions(req.query, {
+      sortBy: "year",
+      sortDir: "desc",
+      groupBy: "school",
+    });
     const userFilter = {};
     if (req.query.school) {
       userFilter.higherSchool = req.query.school;
@@ -21,17 +25,18 @@ router.get("/export", verifyToken, authenticateAdmin, async (req, res) => {
     const publications = await Publication.find(filter)
       .populate({ path: "userId", match: userFilter })
       .sort({ year: -1, title: 1 });
-    const exportPublications = Object.keys(userFilter).length > 0
+    const filteredPublications = Object.keys(userFilter).length > 0
       ? publications.filter((pub) => pub.userId)
       : publications;
+    const exportPublications = sortPublicationsForReport(filteredPublications, reportOptions);
 
     if (format === "pdf") {
-      return sendPdf(res, exportPublications, "approved_publications.pdf", "Approved Publications");
+      return sendPdf(res, exportPublications, "approved_publications.pdf", "Approved Publications", reportOptions);
     }
     if (format === "xlsx") {
-      return sendXlsx(res, exportPublications, "approved_publications.xlsx", "Approved Publications");
+      return sendXlsx(res, exportPublications, "approved_publications.xlsx", "Approved Publications", reportOptions);
     }
-    return sendCsv(res, exportPublications, "approved_publications.csv");
+    return sendCsv(res, exportPublications, "approved_publications.csv", reportOptions);
   } catch (error) {
     console.error("Admin export failed:", error);
     return res.status(500).json({ message: "Export failed" });
@@ -42,6 +47,11 @@ router.get("/", verifyToken, authenticateAdmin, async (req, res) => {
   try {
     const { school } = req.query;
     const filter = buildPublicationFilters(req.query);
+    const reportOptions = buildReportOptions(req.query, {
+      sortBy: "updatedAt",
+      sortDir: "desc",
+      groupBy: "none",
+    });
     const userFilter = {};
 
     if (school) {
@@ -56,11 +66,11 @@ router.get("/", verifyToken, authenticateAdmin, async (req, res) => {
       .sort({ updatedAt: -1, year: -1 })
       .exec();
 
-    if (Object.keys(userFilter).length > 0) {
-      return res.status(200).json(publications.filter((pub) => pub.userId));
-    }
+    const visiblePublications = Object.keys(userFilter).length > 0
+      ? publications.filter((pub) => pub.userId)
+      : publications;
 
-    return res.status(200).json(publications);
+    return res.status(200).json(sortPublicationsForReport(visiblePublications, reportOptions));
   } catch (error) {
     console.error("Admin publication fetch failed:", error);
     return res.status(500).json({ message: "Server error" });

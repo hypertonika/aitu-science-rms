@@ -1,41 +1,44 @@
 import { makeAuthenticatedRequest } from './api'
 
-export async function generateReport(url, navigate, selectedSchool = 'all') {
+export async function generateReport(url, navigate, options = 'all') {
   try {
     const token = localStorage.getItem('accessToken')
     if (!token) {
-      alert('Авторизуйтесь перед генерацией отчета.')
+      alert('Please sign in before generating a report.')
       navigate('/login')
       return
     }
+
+    const reportOptions = typeof options === 'string'
+      ? { higherSchool: options }
+      : options
 
     const response = await makeAuthenticatedRequest(
       `${url}/api/admin/generateAllPublicationsReport`,
       {
         method: 'POST',
         responseType: 'blob',
-        data: { higherSchool: selectedSchool },
+        data: {
+          higherSchool: 'all',
+          ...reportOptions,
+        },
       },
       navigate
     )
 
-    // Проверяем, что получили бинарные данные
     if (response.data instanceof Blob) {
-      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-      const reportUrl = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = reportUrl
-      a.download = 'all_publications_report.docx'
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(reportUrl)
-      a.remove()
-    } else {
-      throw new Error('Неверный формат ответа от сервера')
+      downloadBlob(
+        response.data,
+        'all_publications_report.docx',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      )
+      return
     }
+
+    throw new Error('Invalid binary response from server')
   } catch (error) {
-    console.error('Ошибка при генерации отчета:', error)
-    alert('Произошла ошибка при генерации отчета: ' + (error.response?.data?.message || error.message))
+    console.error('Report generation failed:', error)
+    alert(`Could not generate report: ${error.response?.data?.message || error.message}`)
   }
 }
 
@@ -43,12 +46,11 @@ export async function generateUserReport(url, navigate, iin) {
   try {
     const token = localStorage.getItem('accessToken')
     if (!token) {
-      alert('Авторизуйтесь перед генерацией отчета.')
+      alert('Please sign in before generating a report.')
       navigate('/login')
       return
     }
 
-    // Генерируем отчет
     const response = await makeAuthenticatedRequest(
       `${url}/api/admin/generateUserReport`,
       {
@@ -62,22 +64,31 @@ export async function generateUserReport(url, navigate, iin) {
       navigate
     )
 
-    // Проверяем, что получили бинарные данные
     if (response.data instanceof Blob) {
-      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-      const reportUrl = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = reportUrl
-      a.download = `user_report_${iin}.docx`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(reportUrl)
-      a.remove()
-    } else {
-      throw new Error('Неверный формат ответа от сервера')
+      downloadBlob(
+        response.data,
+        `user_report_${iin}.docx`,
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      )
+      return
     }
+
+    throw new Error('Invalid binary response from server')
   } catch (error) {
-    console.error('Ошибка при генерации отчета:', error)
-    alert('Произошла ошибка при генерации отчета: ' + (error.response?.data?.message || error.message))
+    console.error('User report generation failed:', error)
+    alert(`Could not generate report: ${error.response?.data?.message || error.message}`)
   }
+}
+
+function downloadBlob(data, filename, type) {
+  const blob = new Blob([data], { type })
+  const reportUrl = window.URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+
+  anchor.href = reportUrl
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  window.URL.revokeObjectURL(reportUrl)
+  anchor.remove()
 }

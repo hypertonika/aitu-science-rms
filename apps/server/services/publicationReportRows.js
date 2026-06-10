@@ -1,25 +1,26 @@
 const reportHeaders = [
-  '№',
-  'ФИО преподавателя',
-  'Должность',
-  'Название публикации',
-  'Тип публикации',
-  'Название журнала / конференции',
-  'Индексация',
-  'Квартиль / уровень',
-  'Год публикации',
-  'DOI / ссылка',
-  'Соавторы',
-  'Статус публикации',
+  'No.',
+  'Teacher name',
+  'Position',
+  'School',
+  'Publication title',
+  'Publication type',
+  'Journal / conference',
+  'Indexing',
+  'Quartile / level',
+  'Year',
+  'DOI / link',
+  'Coauthors',
+  'Status',
 ];
 
 const publicationTypeLabels = {
-  scopus_wos: 'Статья',
-  koknvo: 'Статья',
-  conference: 'Конференция',
-  articles: 'Статья',
-  books: 'Книга',
-  patents: 'Патент',
+  scopus_wos: 'Article',
+  koknvo: 'Article',
+  conference: 'Conference',
+  articles: 'Article',
+  books: 'Book',
+  patents: 'Patent',
 };
 
 const statusLabels = {
@@ -39,6 +40,7 @@ function buildPublicationReportRows(publications = [], options = {}) {
       number: index + 1,
       teacherName: valueOrDash(teacherName),
       position: valueOrDash(user.position),
+      school: valueOrDash(user.higherSchool),
       title: valueOrDash(pub.title),
       publicationType: getPublicationTypeLabel(pub),
       journalOrConference: valueOrDash(pub.journal || pub.output),
@@ -66,6 +68,31 @@ function buildPublicationReportRowsByUser(publicationsByUser = {}) {
   return buildPublicationReportRows(publications);
 }
 
+function groupReportRows(rows = [], groupBy = 'none') {
+  if (groupBy !== 'school' && groupBy !== 'year') {
+    return [{ label: '', rows }];
+  }
+
+  const groups = [];
+  const groupsByLabel = new Map();
+
+  rows.forEach((row) => {
+    const label = groupBy === 'school'
+      ? valueOrDash(row.school)
+      : valueOrDash(row.year);
+
+    if (!groupsByLabel.has(label)) {
+      const group = { label, rows: [] };
+      groupsByLabel.set(label, group);
+      groups.push(group);
+    }
+
+    groupsByLabel.get(label).rows.push(row);
+  });
+
+  return groups;
+}
+
 function getPublicationTypeLabel(publication) {
   return publicationTypeLabels[publication.publicationType] || valueOrDash(publication.publicationType);
 }
@@ -77,12 +104,12 @@ function getIndexing(publication) {
   if (publication.scopus) return 'Scopus';
   if (publication.wos) return 'WoS';
   if (publication.publicationType === 'scopus_wos') return 'Scopus / WoS';
-  if (publication.publicationType === 'koknvo') return 'РК журнал';
+  if (publication.publicationType === 'koknvo') return 'CQAFSHE journal';
   if (publication.publicationType === 'conference') return 'Conference';
   if (publication.publicationType === 'books') return 'Book';
   if (publication.publicationType === 'patents') return 'Patent';
 
-  return '—';
+  return '-';
 }
 
 function getQuartileOrLevel(publication) {
@@ -92,24 +119,24 @@ function getQuartileOrLevel(publication) {
   const quartile = extractQuartile(publication.output) || extractQuartile(publication.journal);
   if (quartile) return quartile;
 
-  if (publication.publicationType === 'koknvo') return 'КОКСНВО';
+  if (publication.publicationType === 'koknvo') return 'CQAFSHE';
   if (publication.publicationType === 'conference') return 'Conference paper';
   if (publication.publicationType === 'books') return 'Book';
   if (publication.publicationType === 'patents') return 'Patent';
 
-  return '—';
+  return '-';
 }
 
 function getCoauthors(authors, user = {}) {
   const authorText = String(authors || '').trim();
-  if (!authorText) return '—';
+  if (!authorText) return '-';
 
   const names = authorText
     .split(/[,;]+/)
     .map((name) => name.trim())
     .filter(Boolean);
 
-  if (names.length === 0) return '—';
+  if (names.length === 0) return '-';
 
   const teacherNames = [
     user.fullName,
@@ -129,7 +156,7 @@ function getCoauthors(authors, user = {}) {
     ));
   });
 
-  return coauthors.length > 0 ? coauthors.join(', ') : '—';
+  return coauthors.length > 0 ? coauthors.join(', ') : '-';
 }
 
 function extractQuartile(value) {
@@ -147,7 +174,7 @@ function normalizePersonName(value) {
 
 function valueOrDash(value) {
   const text = String(value ?? '').trim();
-  return text || '—';
+  return text || '-';
 }
 
 function toPlainObject(value) {
@@ -161,5 +188,6 @@ function toPlainObject(value) {
 module.exports = {
   buildPublicationReportRows,
   buildPublicationReportRowsByUser,
+  groupReportRows,
   reportHeaders,
 };

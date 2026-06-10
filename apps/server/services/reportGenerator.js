@@ -15,16 +15,22 @@ const fs = require('fs');
 const path = require('path');
 const {
   buildPublicationReportRows,
-  buildPublicationReportRowsByUser,
+  groupReportRows,
   reportHeaders,
 } = require('./publicationReportRows');
+const { buildReportOptions, sortPublicationsForReport } = require('./reportOptions');
 
 const reportsDir = path.join(__dirname, 'reports');
 
 async function generateSingleUserReport(userData, publications = []) {
   ensureReportsDir();
 
-  const rows = buildPublicationReportRows(publications, { ownerUser: userData });
+  const sortedPublications = sortPublicationsForReport(publications, {
+    sortBy: 'year',
+    sortDir: 'desc',
+    groupBy: 'none',
+  });
+  const rows = buildPublicationReportRows(sortedPublications, { ownerUser: userData });
   const doc = new Document({
     sections: [
       {
@@ -65,15 +71,18 @@ async function generateSingleUserReport(userData, publications = []) {
   return filePath;
 }
 
-async function generateAllPublicationsReport(publicationsByUser, higherSchool = 'all') {
+async function generateAllPublicationsReport(publicationsByUser, higherSchool = 'all', options = {}) {
   ensureReportsDir();
-
-  const schools = {};
-  Object.values(publicationsByUser).forEach(({ user, publications }) => {
-    if (!user.higherSchool) return;
-    if (!schools[user.higherSchool]) schools[user.higherSchool] = [];
-    schools[user.higherSchool].push({ user, publications });
+  const reportOptions = buildReportOptions(options, {
+    sortBy: 'year',
+    sortDir: 'desc',
+    groupBy: 'school',
   });
+
+  const reportPublications = flattenPublicationsByUser(publicationsByUser);
+  const sortedPublications = sortPublicationsForReport(reportPublications, reportOptions);
+  const publicationRows = buildPublicationReportRows(sortedPublications);
+  const rowGroups = groupReportRows(publicationRows, reportOptions.groupBy);
 
   const docSections = [
     new Paragraph({
@@ -87,36 +96,29 @@ async function generateAllPublicationsReport(publicationsByUser, higherSchool = 
         : 'Publication report for all schools',
       alignment: AlignmentType.CENTER,
     }),
+    new Paragraph({
+      text: `Grouped by: ${reportOptions.groupBy}; sorted by: ${reportOptions.sortBy} ${reportOptions.sortDir}`,
+      alignment: AlignmentType.CENTER,
+    }),
   ];
 
-  const selectedSchools = higherSchool && higherSchool !== 'all'
-    ? { [higherSchool]: schools[higherSchool] || [] }
-    : schools;
-
-  let totalPublications = 0;
-  Object.entries(selectedSchools).forEach(([school, usersArr]) => {
-    const schoolPublications = usersArr.flatMap(({ publications }) => publications || []);
-    totalPublications += schoolPublications.length;
-    const publicationRows = buildPublicationReportRowsByUser(
-      Object.fromEntries(usersArr.map((value, index) => [index, value]))
-    );
-
+  rowGroups.forEach((group) => {
     docSections.push(
       new Paragraph({
-        text: `School: ${school}`,
+        text: group.label ? `${groupLabel(reportOptions.groupBy)}: ${group.label}` : 'Publications',
         heading: HeadingLevel.HEADING_2,
         spacing: { before: 300 },
       }),
       new Paragraph({
-        text: `Total publications: ${schoolPublications.length}`,
+        text: `Total publications: ${group.rows.length}`,
         alignment: AlignmentType.LEFT,
       }),
-      createPublicationTable(publicationRows)
+      createPublicationTable(group.rows)
     );
   });
 
   docSections.splice(2, 0, new Paragraph({
-    text: `Total publications: ${totalPublications}`,
+    text: `Total publications: ${publicationRows.length}`,
     alignment: AlignmentType.LEFT,
     spacing: { after: 300 },
   }));
@@ -155,6 +157,7 @@ function createPublicationTable(reportRows) {
         cell(row.number),
         cell(row.teacherName),
         cell(row.position),
+        cell(row.school),
         cell(row.title),
         cell(row.publicationType),
         cell(row.journalOrConference),
@@ -175,6 +178,22 @@ function createPublicationTable(reportRows) {
       type: WidthType.PERCENTAGE,
     },
   });
+}
+
+function flattenPublicationsByUser(publicationsByUser = {}) {
+  return Object.values(publicationsByUser).flatMap(({ user, publications = [] }) => {
+    return publications.map((publication) => {
+      const pub = toPlainObject(publication);
+      pub._reportUser = toPlainObject(user);
+      return pub;
+    });
+  });
+}
+
+function groupLabel(groupBy) {
+  if (groupBy === 'school') return 'School';
+  if (groupBy === 'year') return 'Year';
+  return 'Group';
 }
 
 function cell(text, options = {}) {
@@ -208,6 +227,14 @@ function safeName(value) {
     .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')
     .replace(/\s+/g, '_')
     .slice(0, 100);
+}
+
+function toPlainObject(value) {
+  if (!value) return {};
+  if (typeof value.toObject === 'function') {
+    return value.toObject();
+  }
+  return { ...value };
 }
 
 module.exports = { generateSingleUserReport, generateAllPublicationsReport };

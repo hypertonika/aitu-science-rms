@@ -1,6 +1,7 @@
 import { createElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  ArrowDownUp,
   CheckCircle2,
   Download,
   FileDown,
@@ -42,6 +43,9 @@ export default function AdminPublications() {
   const [school, setSchool] = useState('')
   const [status, setStatus] = useState('submitted')
   const [search, setSearch] = useState('')
+  const [reportGroupBy, setReportGroupBy] = useState('school')
+  const [reportSortBy, setReportSortBy] = useState('year')
+  const [reportSortDir, setReportSortDir] = useState('desc')
   const [publications, setPublications] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [reviewComments, setReviewComments] = useState({})
@@ -60,6 +64,8 @@ export default function AdminPublications() {
             year: year || undefined,
             status: status || undefined,
             query: search || undefined,
+            sortBy: reportSortBy,
+            sortDir: reportSortDir,
           },
         },
         navigate
@@ -74,7 +80,7 @@ export default function AdminPublications() {
     } finally {
       setIsLoading(false)
     }
-  }, [navigate, school, search, status, t, type, year])
+  }, [navigate, reportSortBy, reportSortDir, school, search, status, t, type, year])
 
   useEffect(() => {
     fetchData()
@@ -82,7 +88,16 @@ export default function AdminPublications() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [school, search, status, type, year])
+  }, [reportSortBy, reportSortDir, school, search, status, type, year])
+
+  const reportFilters = useMemo(() => ({
+    publicationType: type || undefined,
+    year: year || undefined,
+    query: search || undefined,
+    groupBy: reportGroupBy,
+    sortBy: reportSortBy,
+    sortDir: reportSortDir,
+  }), [reportGroupBy, reportSortBy, reportSortDir, search, type, year])
 
   const counts = useMemo(() => {
     return publications.reduce(
@@ -131,7 +146,11 @@ export default function AdminPublications() {
         {
           method: 'GET',
           responseType: 'blob',
-          params: { format, school: school || undefined },
+          params: {
+            format,
+            school: school || undefined,
+            ...reportFilters,
+          },
         },
         navigate
       )
@@ -176,7 +195,10 @@ export default function AdminPublications() {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => generateReport(url, navigate, school || 'all')}
+                onClick={() => generateReport(url, navigate, {
+                  higherSchool: school || 'all',
+                  ...reportFilters,
+                })}
                 className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 <FileDown className="h-4 w-4" />
@@ -248,6 +270,55 @@ export default function AdminPublications() {
                 <option key={schoolItem} value={schoolItem}>{t(schoolItem)}</option>
               ))}
             </select>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <label className="block">
+              <span className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                <Filter className="h-3.5 w-3.5" />
+                {t('Group report')}
+              </span>
+              <select
+                value={reportGroupBy}
+                onChange={(event) => setReportGroupBy(event.target.value)}
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="school">{t('By school')}</option>
+                <option value="year">{t('By year')}</option>
+                <option value="none">{t('No grouping')}</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                <ArrowDownUp className="h-3.5 w-3.5" />
+                {t('Sort report')}
+              </span>
+              <select
+                value={reportSortBy}
+                onChange={(event) => setReportSortBy(event.target.value)}
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="year">{t('Year')}</option>
+                <option value="school">{t('School')}</option>
+                <option value="teacher">{t('Teacher')}</option>
+                <option value="title">{t('Title')}</option>
+                <option value="type">{t('Type')}</option>
+                <option value="updatedAt">{t('Last updated')}</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                <ArrowDownUp className="h-3.5 w-3.5" />
+                {t('Direction')}
+              </span>
+              <select
+                value={reportSortDir}
+                onChange={(event) => setReportSortDir(event.target.value)}
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="desc">{t('Newest first')}</option>
+                <option value="asc">{t('Oldest first')}</option>
+              </select>
+            </label>
           </div>
         </section>
 

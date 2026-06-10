@@ -1,6 +1,8 @@
 const { User } = require('../../../models');
 const Publication = require('../../../models/Publication');
 const { generateAllPublicationsReport } = require('../../../services/reportGenerator');
+const { buildPublicationFilters } = require('../../../services/publicationUtils');
+const { buildReportOptions } = require('../../../services/reportOptions');
 const { verifyToken } = require('../../../middleware/auth');
 const fs = require('fs');
 
@@ -23,6 +25,13 @@ module.exports = async function handler(req, res) {
 
   try {
     const { higherSchool = 'all' } = req.body;
+    const publicationFilter = buildPublicationFilters(req.body);
+    publicationFilter.status = 'approved';
+    const reportOptions = buildReportOptions(req.body, {
+      sortBy: 'year',
+      sortDir: 'desc',
+      groupBy: 'school',
+    });
     const publicationsByUser = {};
     let users;
     if (higherSchool && higherSchool !== 'all') {
@@ -34,11 +43,11 @@ module.exports = async function handler(req, res) {
     for (const user of users) {
       publicationsByUser[user.iin] = {
         user,
-        publications: await Publication.find({ iin: user.iin, status: 'approved' }),
+        publications: await Publication.find({ ...publicationFilter, iin: user.iin }),
       };
     }
 
-    const filePath = await generateAllPublicationsReport(publicationsByUser, higherSchool);
+    const filePath = await generateAllPublicationsReport(publicationsByUser, higherSchool, reportOptions);
 
     if (fs.existsSync(filePath)) {
       const safeSchool = encodeURIComponent(higherSchool || 'school');
